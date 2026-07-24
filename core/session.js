@@ -94,7 +94,7 @@ class Session extends EventEmitter {
         generateHighQualityLinkPreview: false,
         syncFullHistory: false,
         fireInitQueries: false,
-        shouldIgnoreJid: () => true,
+        shouldIgnoreJid: () => false,
         patchMessageBeforeSending: (msg) => msg,
         getMessage: async () => null
       });
@@ -191,7 +191,17 @@ class Session extends EventEmitter {
       if (type !== 'notify') return;
 
       for (const m of messages) {
-        if (m.key?.remoteJid?.includes('@s.whatsapp.net') || m.key?.remoteJid?.includes('@g.us')) {
+        const jid = m.key?.remoteJid || '';
+        const isWhatsApp = jid.endsWith('@s.whatsapp.net');
+        const isGroup = jid.endsWith('@g.us');
+        const isLid = jid.endsWith('@lid');
+
+        if (isWhatsApp || isGroup || isLid) {
+          // Normalize: if LID, use remoteJidAlt as canonical sender
+          if (isLid && m.key?.remoteJidAlt) {
+            console.log(`[TRACE] LID→JID: ${jid} → ${m.key.remoteJidAlt}`);
+            m.key.remoteJid = m.key.remoteJidAlt;
+          }
           await this._handleIncomingMessage(m);
         }
       }
@@ -214,12 +224,20 @@ class Session extends EventEmitter {
   }
 
   async _handleIncomingMessage(msg) {
+    console.log(`[TRACE] _handleIncomingMessage ENTERED, remoteJid=${msg.key.remoteJid}, fromMe=${msg.key.fromMe}`);
     const sender = msg.key.remoteJid;
     const fromMe = msg.key.fromMe;
-    if (fromMe) return;
+    if (fromMe) {
+      console.log(`[TRACE] _handleIncomingMessage SKIP: fromMe=true`);
+      return;
+    }
 
     const messageContent = this._getMessageContent(msg);
-    if (!messageContent) return;
+    if (!messageContent) {
+      console.log(`[TRACE] _handleIncomingMessage SKIP: no messageContent (msg.message keys: ${Object.keys(msg.message || {}).join(',')})`);
+      return;
+    }
+    console.log(`[TRACE] _handleIncomingMessage content="${messageContent.substring(0,50)}"`);
 
     const user = sender.split('@')[0];
     const message = {
@@ -245,6 +263,7 @@ class Session extends EventEmitter {
     this.log.info(`Message from ${message.isGroup ? 'group' : 'user'} ${user}: ${message.content.substring(0, 100)}`);
 
     // Auto reply
+    console.log(`[TRACE] autoReply=${this.autoReply}, connected=${this.connected}, replyService=${!!this.replyService}`);
     if (this.autoReply && this.connected) {
       await this._sendReadReceipt(sender, msg.key);
       await this._sendTyping(sender);
@@ -301,10 +320,13 @@ class Session extends EventEmitter {
   }
 
   async _processAutoReply(sender, message) {
+    console.log(`[TRACE] _processAutoReply ENTERED, replyService=${!!this.replyService}`);
     // Use ReplyService if available (AI-driven)
     if (this.replyService) {
+      console.log(`[TRACE] _processAutoReply → replyService.processIncomingMessage(sessionId=${this.id}, sender=${sender})`);
       try {
         await this.replyService.processIncomingMessage(this.id, sender, message);
+        console.log(`[TRACE] _processAutoReply → replyService returned OK`);
         return;
       } catch (err) {
         this.log.error(`ReplyService error: ${err.message}, falling back to knowledge base`);

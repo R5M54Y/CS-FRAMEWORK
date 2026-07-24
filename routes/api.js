@@ -7,6 +7,10 @@ const controller = require('../controllers/mainController');
 // Health
 router.get('/health', controller.health);
 
+// Runtime status
+router.get('/runtime-status', controller.runtimeStatus);
+router.get('/observability', controller.observability);
+
 // Sessions
 router.get('/sessions', controller.getSessions);
 router.post('/session', controller.createSession);

@@ -49,6 +49,8 @@ class MainController {
     this.updateSettings = this.updateSettings.bind(this);
     this.testAIGateway = this.testAIGateway.bind(this);
     this.getAIQueueStats = this.getAIQueueStats.bind(this);
+    this.runtimeStatus = this.runtimeStatus.bind(this);
+    this.observability = this.observability.bind(this);
   }
 
   health(req, res) {
@@ -58,6 +60,37 @@ class MainController {
       uptime: process.uptime(),
       memory: process.memoryUsage(),
       sessions: sessionManager.getAllSessions().length
+    });
+  }
+
+  runtimeStatus(req, res) {
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      sessions: sessionManager.getAllSessions().length,
+      version: '1.0.0'
+    });
+  }
+
+  observability(req, res) {
+    const sessions = sessionManager.getAllSessions();
+    const sessionStatuses = sessions.map(session => session.getStatus());
+    
+    res.json({
+      service: 'WhatsApp CS Framework',
+      version: '1.0.0',
+      uptime: process.uptime(),
+      sessions: sessionStatuses,
+      health: {
+        status: 'healthy',
+        checks: [
+          { name: 'process_running', status: 'pass' },
+          { name: 'sessions_loaded', status: sessions.length > 0 ? 'pass' : 'fail' },
+          { name: 'socket_connected', status: sessions.some(s => s.connected) ? 'pass' : 'fail' }
+        ]
+      }
     });
   }
 

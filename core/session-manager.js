@@ -434,14 +434,16 @@ class SessionManager extends EventEmitter {
   // Auto-connect all sessions on startup
   async autoConnectAll() {
     const sessions = this.getAllSessions();
+    this.log.info(`Auto-connecting ${sessions.length} session(s)...`);
     for (const session of sessions) {
-      if (session.state === 'connected') {
-        this.log.info(`Auto-connecting session: ${session.id}`);
-        try {
-          await this.connectSession(session.id);
-        } catch (e) {
-          this.log.error(`Failed to auto-connect ${session.id}: ${e.message}`);
-        }
+      if (session.state !== 'disconnected' && session.state !== 'error') {
+        continue;
+      }
+      this.log.info(`Auto-connecting session: ${session.id} (${session.name})`);
+      try {
+        await this.connectSession(session.id);
+      } catch (e) {
+        this.log.error(`Failed to auto-connect ${session.id}: ${e.message}`);
       }
     }
   }
