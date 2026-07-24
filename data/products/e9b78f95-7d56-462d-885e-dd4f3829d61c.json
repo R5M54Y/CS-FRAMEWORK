@@ -1,0 +1,16 @@
+{
+  "id": "e9b78f95-7d56-462d-885e-dd4f3829d61c",
+  "name": "Bulk B",
+  "description": "",
+  "price": 20000,
+  "originalPrice": null,
+  "category": "general",
+  "stock": 0,
+  "images": [],
+  "features": [],
+  "specifications": {},
+  "tags": [],
+  "isActive": true,
+  "createdAt": "2026-07-23T20:52:54.367Z",
+  "updatedAt": "2026-07-23T20:52:54.367Z"
+}

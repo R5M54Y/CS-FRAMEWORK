@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "id": "530d6454-5f49-47fa-aac6-261fb333ec27",
+      "title": "FAQ Pengiriman",
+      "category": "shipping",
+      "tags": [],
+      "createdAt": "2026-07-23T15:58:44.848Z",
+      "updatedAt": "2026-07-23T15:58:44.848Z"
+    },
+    {
+      "id": "647dd662-98fe-470b-9eff-6f1c83590ddf",
+      "title": "FAQ Jam Buka",
+      "category": "company_profile",
+      "tags": [],
+      "createdAt": "2026-07-23T16:22:38.988Z",
+      "updatedAt": "2026-07-23T16:22:38.988Z"
+    }
+  ]
+}

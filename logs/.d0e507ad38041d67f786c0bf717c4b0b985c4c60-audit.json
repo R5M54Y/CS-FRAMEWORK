@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": false,
+        "amount": 14
+    },
+    "auditLog": "D:\\MULTICS\\whatsapp-cs-framework\\logs\\.d0e507ad38041d67f786c0bf717c4b0b985c4c60-audit.json",
+    "files": [
+        {
+            "date": 1784820537276,
+            "name": "D:\\MULTICS\\whatsapp-cs-framework\\logs\\app-2026-07-23.log",
+            "hash": "54bc49444d90a7b7949a50542a2d76e8a2c3c3eef2c58c7b0525adb15f3a1d7d"
+        },
+        {
+            "date": 1784826925772,
+            "name": "D:\\MULTICS\\whatsapp-cs-framework\\logs\\app-2026-07-24.log",
+            "hash": "e1c703b9e4f11cba0ebe6100d5520453ed1931a90dd57c30638667ea4f388d27"
+        }
+    ],
+    "hashType": "sha256"
+}

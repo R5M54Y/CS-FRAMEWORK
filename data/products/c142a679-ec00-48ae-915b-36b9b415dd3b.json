@@ -1,0 +1,16 @@
+{
+  "id": "c142a679-ec00-48ae-915b-36b9b415dd3b",
+  "name": "Bulk A",
+  "description": "",
+  "price": 10000,
+  "originalPrice": null,
+  "category": "general",
+  "stock": 0,
+  "images": [],
+  "features": [],
+  "specifications": {},
+  "tags": [],
+  "isActive": true,
+  "createdAt": "2026-07-23T20:52:54.365Z",
+  "updatedAt": "2026-07-23T20:52:54.365Z"
+}

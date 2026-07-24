@@ -1,0 +1,13 @@
+{
+  "sessions": [
+    {
+      "id": "cfb416ec-d151-4e3f-81c9-7342ca81cc9d",
+      "name": "Yoana",
+      "port": 3109,
+      "autoReconnect": true,
+      "autoReply": true,
+      "typingDelay": 1000,
+      "readDelay": 500
+    }
+  ]
+}

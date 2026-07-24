@@ -1,0 +1,541 @@
+2026-07-24 00:15:26 [info] [eff66487-134e-412d-909b-aeeaddf11e57] [session] Session eff66487-134e-412d-909b-aeeaddf11e57 initialized
+2026-07-24 00:15:26 [info] [manager] [session-manager] Loaded session: eff66487-134e-412d-909b-aeeaddf11e57 (eff66487) on port 3100
+2026-07-24 00:15:26 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 00:15:26 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (fbe50153) on port 3101
+2026-07-24 00:15:26 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Session 9033be18-1b3a-4945-b4ed-ee04e6900d71 initialized
+2026-07-24 00:15:26 [info] [manager] [session-manager] Loaded session: 9033be18-1b3a-4945-b4ed-ee04e6900d71 (9033be18) on port 3102
+2026-07-24 00:15:26 [info] [5b097f11-85c0-4fd5-85e5-b596a23b052c] [session] Session 5b097f11-85c0-4fd5-85e5-b596a23b052c initialized
+2026-07-24 00:15:26 [info] [manager] [session-manager] Loaded session: 5b097f11-85c0-4fd5-85e5-b596a23b052c (5b097f11) on port 3103
+2026-07-24 00:15:26 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 00:15:26 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 00:15:26 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 00:15:26 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 00:15:26 [info] [54bcf6cd-8674-4ccd-95e7-8e59955cc858] [session] Session 54bcf6cd-8674-4ccd-95e7-8e59955cc858 initialized
+2026-07-24 00:15:26 [info] [manager] [session-manager] Loaded session: 54bcf6cd-8674-4ccd-95e7-8e59955cc858 (AI Test Bot) on port 3106
+2026-07-24 00:15:26 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 00:15:26 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 00:17:16 [info] [eff66487-134e-412d-909b-aeeaddf11e57] [session] Session eff66487-134e-412d-909b-aeeaddf11e57 initialized
+2026-07-24 00:17:16 [info] [manager] [session-manager] Loaded session: eff66487-134e-412d-909b-aeeaddf11e57 (eff66487) on port 3100
+2026-07-24 00:17:16 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 00:17:16 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (fbe50153) on port 3101
+2026-07-24 00:17:16 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Session 9033be18-1b3a-4945-b4ed-ee04e6900d71 initialized
+2026-07-24 00:17:16 [info] [manager] [session-manager] Loaded session: 9033be18-1b3a-4945-b4ed-ee04e6900d71 (9033be18) on port 3102
+2026-07-24 00:17:16 [info] [5b097f11-85c0-4fd5-85e5-b596a23b052c] [session] Session 5b097f11-85c0-4fd5-85e5-b596a23b052c initialized
+2026-07-24 00:17:16 [info] [manager] [session-manager] Loaded session: 5b097f11-85c0-4fd5-85e5-b596a23b052c (5b097f11) on port 3103
+2026-07-24 00:17:16 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 00:17:16 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 00:17:16 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 00:17:16 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 00:17:16 [info] [54bcf6cd-8674-4ccd-95e7-8e59955cc858] [session] Session 54bcf6cd-8674-4ccd-95e7-8e59955cc858 initialized
+2026-07-24 00:17:16 [info] [manager] [session-manager] Loaded session: 54bcf6cd-8674-4ccd-95e7-8e59955cc858 (AI Test Bot) on port 3106
+2026-07-24 00:17:16 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 00:17:51 [info] [eff66487-134e-412d-909b-aeeaddf11e57] [session] Session eff66487-134e-412d-909b-aeeaddf11e57 initialized
+2026-07-24 00:17:51 [info] [manager] [session-manager] Loaded session: eff66487-134e-412d-909b-aeeaddf11e57 (eff66487) on port 3100
+2026-07-24 00:17:51 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 00:17:51 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (fbe50153) on port 3101
+2026-07-24 00:17:51 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Session 9033be18-1b3a-4945-b4ed-ee04e6900d71 initialized
+2026-07-24 00:17:51 [info] [manager] [session-manager] Loaded session: 9033be18-1b3a-4945-b4ed-ee04e6900d71 (9033be18) on port 3102
+2026-07-24 00:17:51 [info] [5b097f11-85c0-4fd5-85e5-b596a23b052c] [session] Session 5b097f11-85c0-4fd5-85e5-b596a23b052c initialized
+2026-07-24 00:17:51 [info] [manager] [session-manager] Loaded session: 5b097f11-85c0-4fd5-85e5-b596a23b052c (5b097f11) on port 3103
+2026-07-24 00:17:51 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 00:17:51 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 00:17:51 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 00:17:51 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 00:17:51 [info] [54bcf6cd-8674-4ccd-95e7-8e59955cc858] [session] Session 54bcf6cd-8674-4ccd-95e7-8e59955cc858 initialized
+2026-07-24 00:17:51 [info] [manager] [session-manager] Loaded session: 54bcf6cd-8674-4ccd-95e7-8e59955cc858 (AI Test Bot) on port 3106
+2026-07-24 00:17:51 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 00:17:51 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 00:20:16 [info] [eff66487-134e-412d-909b-aeeaddf11e57] [session] Session eff66487-134e-412d-909b-aeeaddf11e57 initialized
+2026-07-24 00:20:16 [info] [manager] [session-manager] Loaded session: eff66487-134e-412d-909b-aeeaddf11e57 (eff66487) on port 3100
+2026-07-24 00:20:16 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 00:20:16 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (fbe50153) on port 3101
+2026-07-24 00:20:16 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Session 9033be18-1b3a-4945-b4ed-ee04e6900d71 initialized
+2026-07-24 00:20:16 [info] [manager] [session-manager] Loaded session: 9033be18-1b3a-4945-b4ed-ee04e6900d71 (9033be18) on port 3102
+2026-07-24 00:20:16 [info] [5b097f11-85c0-4fd5-85e5-b596a23b052c] [session] Session 5b097f11-85c0-4fd5-85e5-b596a23b052c initialized
+2026-07-24 00:20:16 [info] [manager] [session-manager] Loaded session: 5b097f11-85c0-4fd5-85e5-b596a23b052c (5b097f11) on port 3103
+2026-07-24 00:20:16 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 00:20:16 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 00:20:16 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 00:20:16 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 00:20:16 [info] [54bcf6cd-8674-4ccd-95e7-8e59955cc858] [session] Session 54bcf6cd-8674-4ccd-95e7-8e59955cc858 initialized
+2026-07-24 00:20:16 [info] [manager] [session-manager] Loaded session: 54bcf6cd-8674-4ccd-95e7-8e59955cc858 (AI Test Bot) on port 3106
+2026-07-24 00:20:16 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 00:20:28 [info] [eff66487-134e-412d-909b-aeeaddf11e57] [session] Session eff66487-134e-412d-909b-aeeaddf11e57 initialized
+2026-07-24 00:20:28 [info] [manager] [session-manager] Loaded session: eff66487-134e-412d-909b-aeeaddf11e57 (eff66487) on port 3100
+2026-07-24 00:20:28 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 00:20:28 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (fbe50153) on port 3101
+2026-07-24 00:20:28 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Session 9033be18-1b3a-4945-b4ed-ee04e6900d71 initialized
+2026-07-24 00:20:28 [info] [manager] [session-manager] Loaded session: 9033be18-1b3a-4945-b4ed-ee04e6900d71 (9033be18) on port 3102
+2026-07-24 00:20:28 [info] [5b097f11-85c0-4fd5-85e5-b596a23b052c] [session] Session 5b097f11-85c0-4fd5-85e5-b596a23b052c initialized
+2026-07-24 00:20:28 [info] [manager] [session-manager] Loaded session: 5b097f11-85c0-4fd5-85e5-b596a23b052c (5b097f11) on port 3103
+2026-07-24 00:20:28 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 00:20:28 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 00:20:28 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 00:20:28 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 00:20:28 [info] [54bcf6cd-8674-4ccd-95e7-8e59955cc858] [session] Session 54bcf6cd-8674-4ccd-95e7-8e59955cc858 initialized
+2026-07-24 00:20:28 [info] [manager] [session-manager] Loaded session: 54bcf6cd-8674-4ccd-95e7-8e59955cc858 (AI Test Bot) on port 3106
+2026-07-24 00:20:28 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 00:20:28 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 00:32:05 [info] [eff66487-134e-412d-909b-aeeaddf11e57] [session] Session eff66487-134e-412d-909b-aeeaddf11e57 initialized
+2026-07-24 00:32:05 [info] [manager] [session-manager] Loaded session: eff66487-134e-412d-909b-aeeaddf11e57 (eff66487) on port 3100
+2026-07-24 00:32:05 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 00:32:05 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (fbe50153) on port 3101
+2026-07-24 00:32:05 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Session 9033be18-1b3a-4945-b4ed-ee04e6900d71 initialized
+2026-07-24 00:32:05 [info] [manager] [session-manager] Loaded session: 9033be18-1b3a-4945-b4ed-ee04e6900d71 (9033be18) on port 3102
+2026-07-24 00:32:05 [info] [5b097f11-85c0-4fd5-85e5-b596a23b052c] [session] Session 5b097f11-85c0-4fd5-85e5-b596a23b052c initialized
+2026-07-24 00:32:05 [info] [manager] [session-manager] Loaded session: 5b097f11-85c0-4fd5-85e5-b596a23b052c (5b097f11) on port 3103
+2026-07-24 00:32:05 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 00:32:05 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 00:32:05 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 00:32:05 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 00:32:05 [info] [54bcf6cd-8674-4ccd-95e7-8e59955cc858] [session] Session 54bcf6cd-8674-4ccd-95e7-8e59955cc858 initialized
+2026-07-24 00:32:05 [info] [manager] [session-manager] Loaded session: 54bcf6cd-8674-4ccd-95e7-8e59955cc858 (AI Test Bot) on port 3106
+2026-07-24 00:32:05 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 00:32:06 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 00:39:04 [info] [eff66487-134e-412d-909b-aeeaddf11e57] [session] Session eff66487-134e-412d-909b-aeeaddf11e57 initialized
+2026-07-24 00:39:04 [info] [manager] [session-manager] Loaded session: eff66487-134e-412d-909b-aeeaddf11e57 (eff66487) on port 3100
+2026-07-24 00:39:04 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 00:39:04 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (fbe50153) on port 3101
+2026-07-24 00:39:04 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Session 9033be18-1b3a-4945-b4ed-ee04e6900d71 initialized
+2026-07-24 00:39:04 [info] [manager] [session-manager] Loaded session: 9033be18-1b3a-4945-b4ed-ee04e6900d71 (9033be18) on port 3102
+2026-07-24 00:39:04 [info] [5b097f11-85c0-4fd5-85e5-b596a23b052c] [session] Session 5b097f11-85c0-4fd5-85e5-b596a23b052c initialized
+2026-07-24 00:39:04 [info] [manager] [session-manager] Loaded session: 5b097f11-85c0-4fd5-85e5-b596a23b052c (5b097f11) on port 3103
+2026-07-24 00:39:04 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 00:39:04 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 00:39:04 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 00:39:04 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 00:39:04 [info] [54bcf6cd-8674-4ccd-95e7-8e59955cc858] [session] Session 54bcf6cd-8674-4ccd-95e7-8e59955cc858 initialized
+2026-07-24 00:39:04 [info] [manager] [session-manager] Loaded session: 54bcf6cd-8674-4ccd-95e7-8e59955cc858 (AI Test Bot) on port 3106
+2026-07-24 00:39:04 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 00:39:04 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 00:39:37 [info] [eff66487-134e-412d-909b-aeeaddf11e57] [session] Session eff66487-134e-412d-909b-aeeaddf11e57 initialized
+2026-07-24 00:39:37 [info] [manager] [session-manager] Loaded session: eff66487-134e-412d-909b-aeeaddf11e57 (eff66487) on port 3100
+2026-07-24 00:39:37 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 00:39:37 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (fbe50153) on port 3101
+2026-07-24 00:39:37 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Session 9033be18-1b3a-4945-b4ed-ee04e6900d71 initialized
+2026-07-24 00:39:37 [info] [manager] [session-manager] Loaded session: 9033be18-1b3a-4945-b4ed-ee04e6900d71 (9033be18) on port 3102
+2026-07-24 00:39:37 [info] [5b097f11-85c0-4fd5-85e5-b596a23b052c] [session] Session 5b097f11-85c0-4fd5-85e5-b596a23b052c initialized
+2026-07-24 00:39:37 [info] [manager] [session-manager] Loaded session: 5b097f11-85c0-4fd5-85e5-b596a23b052c (5b097f11) on port 3103
+2026-07-24 00:39:37 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 00:39:37 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 00:39:37 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 00:39:37 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 00:39:37 [info] [54bcf6cd-8674-4ccd-95e7-8e59955cc858] [session] Session 54bcf6cd-8674-4ccd-95e7-8e59955cc858 initialized
+2026-07-24 00:39:37 [info] [manager] [session-manager] Loaded session: 54bcf6cd-8674-4ccd-95e7-8e59955cc858 (AI Test Bot) on port 3106
+2026-07-24 00:39:37 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 00:39:37 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 00:46:02 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Connecting...
+2026-07-24 00:46:02 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 00:46:03 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] QR code generated (attempt 1)
+2026-07-24 00:47:03 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] QR code generated (attempt 2)
+2026-07-24 00:47:23 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] QR code generated (attempt 3)
+2026-07-24 00:47:43 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] QR code generated (attempt 4)
+2026-07-24 00:48:03 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] QR code generated (attempt 5)
+2026-07-24 00:48:23 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] QR code generated (attempt 6)
+2026-07-24 00:48:43 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 00:48:48 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Connecting...
+2026-07-24 00:48:49 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 00:48:50 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] QR code generated (attempt 7)
+2026-07-24 00:49:50 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] QR code generated (attempt 8)
+2026-07-24 00:50:10 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] QR code generated (attempt 9)
+2026-07-24 00:50:30 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] QR code generated (attempt 10)
+2026-07-24 00:50:50 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] QR code generated (attempt 11)
+2026-07-24 00:51:10 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] QR code generated (attempt 12)
+2026-07-24 00:51:30 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 00:51:35 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Connecting...
+2026-07-24 00:51:35 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 00:51:36 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] QR code generated (attempt 13)
+2026-07-24 00:52:40 [info] [eff66487-134e-412d-909b-aeeaddf11e57] [session] Session eff66487-134e-412d-909b-aeeaddf11e57 initialized
+2026-07-24 00:52:40 [info] [manager] [session-manager] Loaded session: eff66487-134e-412d-909b-aeeaddf11e57 (eff66487) on port 3100
+2026-07-24 00:52:40 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 00:52:40 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (fbe50153) on port 3101
+2026-07-24 00:52:40 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Session 9033be18-1b3a-4945-b4ed-ee04e6900d71 initialized
+2026-07-24 00:52:40 [info] [manager] [session-manager] Loaded session: 9033be18-1b3a-4945-b4ed-ee04e6900d71 (9033be18) on port 3102
+2026-07-24 00:52:40 [info] [5b097f11-85c0-4fd5-85e5-b596a23b052c] [session] Session 5b097f11-85c0-4fd5-85e5-b596a23b052c initialized
+2026-07-24 00:52:40 [info] [manager] [session-manager] Loaded session: 5b097f11-85c0-4fd5-85e5-b596a23b052c (5b097f11) on port 3103
+2026-07-24 00:52:40 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 00:52:40 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 00:52:40 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 00:52:40 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 00:52:40 [info] [54bcf6cd-8674-4ccd-95e7-8e59955cc858] [session] Session 54bcf6cd-8674-4ccd-95e7-8e59955cc858 initialized
+2026-07-24 00:52:40 [info] [manager] [session-manager] Loaded session: 54bcf6cd-8674-4ccd-95e7-8e59955cc858 (AI Test Bot) on port 3106
+2026-07-24 00:52:40 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 00:52:40 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 00:52:57 [info] [manager] [session-manager] Updated session: 9033be18-1b3a-4945-b4ed-ee04e6900d71
+2026-07-24 00:54:21 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Connecting...
+2026-07-24 00:54:21 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 00:54:22 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] QR code generated (attempt 1)
+2026-07-24 00:55:18 [info] [9033be18-1b3a-4945-b4ed-ee04e6900d71] [session] Disconnected
+2026-07-24 00:55:18 [info] [manager] [session-manager] Deleted session: 9033be18-1b3a-4945-b4ed-ee04e6900d71
+2026-07-24 01:01:58 [info] [manager] [session-manager] Updated session: eff66487-134e-412d-909b-aeeaddf11e57
+2026-07-24 01:11:34 [info] [eff66487-134e-412d-909b-aeeaddf11e57] [session] Session eff66487-134e-412d-909b-aeeaddf11e57 initialized
+2026-07-24 01:11:34 [info] [manager] [session-manager] Loaded session: eff66487-134e-412d-909b-aeeaddf11e57 (TEST VERIFY) on port 3100
+2026-07-24 01:11:34 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 01:11:34 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (fbe50153) on port 3101
+2026-07-24 01:11:34 [info] [5b097f11-85c0-4fd5-85e5-b596a23b052c] [session] Session 5b097f11-85c0-4fd5-85e5-b596a23b052c initialized
+2026-07-24 01:11:34 [info] [manager] [session-manager] Loaded session: 5b097f11-85c0-4fd5-85e5-b596a23b052c (5b097f11) on port 3103
+2026-07-24 01:11:34 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 01:11:34 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 01:11:34 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 01:11:34 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 01:11:34 [info] [54bcf6cd-8674-4ccd-95e7-8e59955cc858] [session] Session 54bcf6cd-8674-4ccd-95e7-8e59955cc858 initialized
+2026-07-24 01:11:34 [info] [manager] [session-manager] Loaded session: 54bcf6cd-8674-4ccd-95e7-8e59955cc858 (AI Test Bot) on port 3106
+2026-07-24 01:11:34 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 01:11:34 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 01:12:05 [info] [manager] [session-manager] Updated session: eff66487-134e-412d-909b-aeeaddf11e57
+2026-07-24 01:13:05 [info] [54bcf6cd-8674-4ccd-95e7-8e59955cc858] [session] Disconnected
+2026-07-24 01:13:05 [info] [manager] [session-manager] Deleted session: 54bcf6cd-8674-4ccd-95e7-8e59955cc858
+2026-07-24 01:13:09 [info] [eff66487-134e-412d-909b-aeeaddf11e57] [session] Disconnected
+2026-07-24 01:13:09 [info] [manager] [session-manager] Deleted session: eff66487-134e-412d-909b-aeeaddf11e57
+2026-07-24 01:13:11 [info] [5b097f11-85c0-4fd5-85e5-b596a23b052c] [session] Disconnected
+2026-07-24 01:13:11 [info] [manager] [session-manager] Deleted session: 5b097f11-85c0-4fd5-85e5-b596a23b052c
+2026-07-24 01:13:32 [info] [manager] [session-manager] Updated session: fbe50153-f02a-48e8-b9e6-bdf8387c881d
+2026-07-24 01:15:22 [info] [5b6aa93d-2bfa-446e-95d5-6733b6c4f23d] [session] Session 5b6aa93d-2bfa-446e-95d5-6733b6c4f23d initialized
+2026-07-24 01:15:22 [info] [manager] [session-manager] Created session: 5b6aa93d-2bfa-446e-95d5-6733b6c4f23d (Yoana) on port 3107
+2026-07-24 01:15:52 [info] [24f54706-fed0-458f-86a7-60bfa5e9280e] [session] Session 24f54706-fed0-458f-86a7-60bfa5e9280e initialized
+2026-07-24 01:15:52 [info] [manager] [session-manager] Created session: 24f54706-fed0-458f-86a7-60bfa5e9280e (Test Session) on port 3108
+2026-07-24 01:16:38 [info] [manager] [session-manager] Updated session: 24f54706-fed0-458f-86a7-60bfa5e9280e
+2026-07-24 01:47:55 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 01:47:55 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (Yoana) on port 3101
+2026-07-24 01:47:55 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 01:47:56 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 01:47:56 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 01:47:56 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 01:47:56 [info] [5b6aa93d-2bfa-446e-95d5-6733b6c4f23d] [session] Session 5b6aa93d-2bfa-446e-95d5-6733b6c4f23d initialized
+2026-07-24 01:47:56 [info] [manager] [session-manager] Loaded session: 5b6aa93d-2bfa-446e-95d5-6733b6c4f23d (Yoana) on port 3107
+2026-07-24 01:47:56 [info] [24f54706-fed0-458f-86a7-60bfa5e9280e] [session] Session 24f54706-fed0-458f-86a7-60bfa5e9280e initialized
+2026-07-24 01:47:56 [info] [manager] [session-manager] Loaded session: 24f54706-fed0-458f-86a7-60bfa5e9280e (Updated Name) on port 3108
+2026-07-24 01:47:56 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 01:47:56 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 02:01:40 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 02:01:40 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (Yoana) on port 3101
+2026-07-24 02:01:40 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 02:01:40 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 02:01:40 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 02:01:40 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 02:01:40 [info] [5b6aa93d-2bfa-446e-95d5-6733b6c4f23d] [session] Session 5b6aa93d-2bfa-446e-95d5-6733b6c4f23d initialized
+2026-07-24 02:01:40 [info] [manager] [session-manager] Loaded session: 5b6aa93d-2bfa-446e-95d5-6733b6c4f23d (Yoana) on port 3107
+2026-07-24 02:01:40 [info] [24f54706-fed0-458f-86a7-60bfa5e9280e] [session] Session 24f54706-fed0-458f-86a7-60bfa5e9280e initialized
+2026-07-24 02:01:40 [info] [manager] [session-manager] Loaded session: 24f54706-fed0-458f-86a7-60bfa5e9280e (Updated Name) on port 3108
+2026-07-24 02:01:40 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 02:01:40 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 02:23:54 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 02:23:54 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (Yoana) on port 3101
+2026-07-24 02:23:54 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 02:23:54 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 02:23:54 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 02:23:54 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 02:23:54 [info] [5b6aa93d-2bfa-446e-95d5-6733b6c4f23d] [session] Session 5b6aa93d-2bfa-446e-95d5-6733b6c4f23d initialized
+2026-07-24 02:23:54 [info] [manager] [session-manager] Loaded session: 5b6aa93d-2bfa-446e-95d5-6733b6c4f23d (Yoana) on port 3107
+2026-07-24 02:23:54 [info] [24f54706-fed0-458f-86a7-60bfa5e9280e] [session] Session 24f54706-fed0-458f-86a7-60bfa5e9280e initialized
+2026-07-24 02:23:54 [info] [manager] [session-manager] Loaded session: 24f54706-fed0-458f-86a7-60bfa5e9280e (Updated Name) on port 3108
+2026-07-24 02:23:54 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 02:23:55 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 02:37:02 [info] [manager] [session-manager] Updated session: fbe50153-f02a-48e8-b9e6-bdf8387c881d
+2026-07-24 02:37:23 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Connecting...
+2026-07-24 02:37:23 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 02:37:24 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] QR code generated (attempt 1)
+2026-07-24 02:37:38 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Disconnected (code: 515), reconnecting in 5000ms...
+2026-07-24 02:37:43 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Connecting...
+2026-07-24 02:37:44 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 02:37:48 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Connected: 6281931966042:10@s.whatsapp.net (Unknown)
+2026-07-24 02:40:11 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 02:40:11 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (Yoana) on port 3101
+2026-07-24 02:40:11 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 02:40:11 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 02:40:11 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 02:40:11 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 02:40:11 [info] [5b6aa93d-2bfa-446e-95d5-6733b6c4f23d] [session] Session 5b6aa93d-2bfa-446e-95d5-6733b6c4f23d initialized
+2026-07-24 02:40:11 [info] [manager] [session-manager] Loaded session: 5b6aa93d-2bfa-446e-95d5-6733b6c4f23d (Yoana) on port 3107
+2026-07-24 02:40:11 [info] [24f54706-fed0-458f-86a7-60bfa5e9280e] [session] Session 24f54706-fed0-458f-86a7-60bfa5e9280e initialized
+2026-07-24 02:40:11 [info] [manager] [session-manager] Loaded session: 24f54706-fed0-458f-86a7-60bfa5e9280e (Updated Name) on port 3108
+2026-07-24 02:40:11 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 02:40:11 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 03:07:34 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:07:34 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:07:36 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 1)
+2026-07-24 03:08:36 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 2)
+2026-07-24 03:08:56 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 3)
+2026-07-24 03:09:16 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 4)
+2026-07-24 03:09:36 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 5)
+2026-07-24 03:09:56 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 6)
+2026-07-24 03:10:16 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:10:21 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:10:21 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:10:22 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 7)
+2026-07-24 03:11:22 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 8)
+2026-07-24 03:11:42 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 9)
+2026-07-24 03:12:02 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 10)
+2026-07-24 03:12:22 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 11)
+2026-07-24 03:12:42 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 12)
+2026-07-24 03:13:02 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:13:07 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:13:07 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:13:08 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 13)
+2026-07-24 03:14:08 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 14)
+2026-07-24 03:14:28 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 15)
+2026-07-24 03:14:48 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 16)
+2026-07-24 03:15:08 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 17)
+2026-07-24 03:15:28 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 18)
+2026-07-24 03:15:48 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:15:53 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:15:53 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:15:54 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 19)
+2026-07-24 03:16:54 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 20)
+2026-07-24 03:17:14 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 21)
+2026-07-24 03:17:34 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 22)
+2026-07-24 03:17:54 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 23)
+2026-07-24 03:18:14 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 24)
+2026-07-24 03:18:34 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:18:39 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:18:39 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:18:40 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 25)
+2026-07-24 03:19:40 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 26)
+2026-07-24 03:20:00 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 27)
+2026-07-24 03:20:20 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 28)
+2026-07-24 03:20:40 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 29)
+2026-07-24 03:21:00 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 30)
+2026-07-24 03:21:20 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:21:25 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:21:26 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:21:27 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 31)
+2026-07-24 03:22:27 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 32)
+2026-07-24 03:22:47 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 33)
+2026-07-24 03:23:07 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 34)
+2026-07-24 03:23:27 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 35)
+2026-07-24 03:23:47 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 36)
+2026-07-24 03:24:07 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:24:12 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:24:12 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:24:13 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 37)
+2026-07-24 03:25:13 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 38)
+2026-07-24 03:25:33 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 39)
+2026-07-24 03:25:53 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 40)
+2026-07-24 03:26:13 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 41)
+2026-07-24 03:26:33 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 42)
+2026-07-24 03:26:53 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:26:58 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:26:58 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:26:59 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 43)
+2026-07-24 03:27:59 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 44)
+2026-07-24 03:28:19 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 45)
+2026-07-24 03:28:39 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 46)
+2026-07-24 03:28:59 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 47)
+2026-07-24 03:29:19 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 48)
+2026-07-24 03:29:39 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:29:44 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:29:45 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:29:46 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 49)
+2026-07-24 03:32:17 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Session fbe50153-f02a-48e8-b9e6-bdf8387c881d initialized
+2026-07-24 03:32:17 [info] [manager] [session-manager] Loaded session: fbe50153-f02a-48e8-b9e6-bdf8387c881d (Yoana) on port 3101
+2026-07-24 03:32:17 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Session 21ee1a54-0722-4621-bfe0-942d2939538c initialized
+2026-07-24 03:32:17 [info] [manager] [session-manager] Loaded session: 21ee1a54-0722-4621-bfe0-942d2939538c (21ee1a54) on port 3104
+2026-07-24 03:32:17 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Session 932a50bb-1735-4c75-b30f-e17f45389a78 initialized
+2026-07-24 03:32:17 [info] [manager] [session-manager] Loaded session: 932a50bb-1735-4c75-b30f-e17f45389a78 (My AI Bot) on port 3105
+2026-07-24 03:32:17 [info] [5b6aa93d-2bfa-446e-95d5-6733b6c4f23d] [session] Session 5b6aa93d-2bfa-446e-95d5-6733b6c4f23d initialized
+2026-07-24 03:32:17 [info] [manager] [session-manager] Loaded session: 5b6aa93d-2bfa-446e-95d5-6733b6c4f23d (Yoana) on port 3107
+2026-07-24 03:32:17 [info] [24f54706-fed0-458f-86a7-60bfa5e9280e] [session] Session 24f54706-fed0-458f-86a7-60bfa5e9280e initialized
+2026-07-24 03:32:17 [info] [manager] [session-manager] Loaded session: 24f54706-fed0-458f-86a7-60bfa5e9280e (Updated Name) on port 3108
+2026-07-24 03:32:17 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 03:32:17 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 03:33:28 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:33:28 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:33:29 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 1)
+2026-07-24 03:34:29 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 2)
+2026-07-24 03:34:49 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 3)
+2026-07-24 03:35:09 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 4)
+2026-07-24 03:35:29 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 5)
+2026-07-24 03:35:49 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 6)
+2026-07-24 03:36:09 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:36:14 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:36:14 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:36:15 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 7)
+2026-07-24 03:37:15 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 8)
+2026-07-24 03:37:35 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 9)
+2026-07-24 03:37:55 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 10)
+2026-07-24 03:38:15 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 11)
+2026-07-24 03:38:35 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 12)
+2026-07-24 03:38:55 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:39:00 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:39:00 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:39:01 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 13)
+2026-07-24 03:40:01 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 14)
+2026-07-24 03:40:21 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 15)
+2026-07-24 03:40:41 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 16)
+2026-07-24 03:41:01 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 17)
+2026-07-24 03:41:21 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 18)
+2026-07-24 03:41:41 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:41:46 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:41:46 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:41:48 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 19)
+2026-07-24 03:42:48 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 20)
+2026-07-24 03:43:08 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 21)
+2026-07-24 03:43:28 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 22)
+2026-07-24 03:43:48 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 23)
+2026-07-24 03:44:08 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 24)
+2026-07-24 03:44:28 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:44:33 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:44:33 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:44:34 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 25)
+2026-07-24 03:45:34 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 26)
+2026-07-24 03:45:54 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 27)
+2026-07-24 03:46:14 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 28)
+2026-07-24 03:46:34 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 29)
+2026-07-24 03:46:54 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 30)
+2026-07-24 03:47:14 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:47:19 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:47:19 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:47:21 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 31)
+2026-07-24 03:48:21 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 32)
+2026-07-24 03:48:41 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 33)
+2026-07-24 03:49:01 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 34)
+2026-07-24 03:49:21 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 35)
+2026-07-24 03:49:41 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 36)
+2026-07-24 03:50:01 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:50:06 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:50:06 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:50:07 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 37)
+2026-07-24 03:51:07 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 38)
+2026-07-24 03:51:27 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 39)
+2026-07-24 03:51:47 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 40)
+2026-07-24 03:52:07 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 41)
+2026-07-24 03:52:27 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 42)
+2026-07-24 03:52:47 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected (code: 408), reconnecting in 5000ms...
+2026-07-24 03:52:52 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Connecting...
+2026-07-24 03:52:52 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:52:53 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 43)
+2026-07-24 03:53:53 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 44)
+2026-07-24 03:54:13 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 45)
+2026-07-24 03:54:33 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] QR code generated (attempt 46)
+2026-07-24 03:54:42 [info] [21ee1a54-0722-4621-bfe0-942d2939538c] [session] Disconnected
+2026-07-24 03:54:42 [info] [manager] [session-manager] Deleted session: 21ee1a54-0722-4621-bfe0-942d2939538c
+2026-07-24 03:54:47 [info] [fbe50153-f02a-48e8-b9e6-bdf8387c881d] [session] Disconnected
+2026-07-24 03:54:47 [info] [manager] [session-manager] Deleted session: fbe50153-f02a-48e8-b9e6-bdf8387c881d
+2026-07-24 03:54:51 [info] [932a50bb-1735-4c75-b30f-e17f45389a78] [session] Disconnected
+2026-07-24 03:54:51 [info] [manager] [session-manager] Deleted session: 932a50bb-1735-4c75-b30f-e17f45389a78
+2026-07-24 03:54:54 [info] [5b6aa93d-2bfa-446e-95d5-6733b6c4f23d] [session] Disconnected
+2026-07-24 03:54:54 [info] [manager] [session-manager] Deleted session: 5b6aa93d-2bfa-446e-95d5-6733b6c4f23d
+2026-07-24 03:54:58 [info] [24f54706-fed0-458f-86a7-60bfa5e9280e] [session] Disconnected
+2026-07-24 03:54:58 [info] [manager] [session-manager] Deleted session: 24f54706-fed0-458f-86a7-60bfa5e9280e
+2026-07-24 03:55:18 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Session cfb416ec-d151-4e3f-81c9-7342ca81cc9d initialized
+2026-07-24 03:55:18 [info] [manager] [session-manager] Created session: cfb416ec-d151-4e3f-81c9-7342ca81cc9d (Yoana) on port 3109
+2026-07-24 03:55:26 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Connecting...
+2026-07-24 03:55:26 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:55:27 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] QR code generated (attempt 1)
+2026-07-24 03:55:42 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Disconnected (code: 515), reconnecting in 5000ms...
+2026-07-24 03:55:47 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Connecting...
+2026-07-24 03:55:47 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 03:55:49 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Connected: 6281931966042:12@s.whatsapp.net (Unknown)
+2026-07-24 04:12:36 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Disconnected (code: 428), reconnecting in 5000ms...
+2026-07-24 04:12:41 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Connecting...
+2026-07-24 04:12:41 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 04:12:43 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Connected: 6281931966042:12@s.whatsapp.net (Unknown)
+2026-07-24 05:20:25 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Session cfb416ec-d151-4e3f-81c9-7342ca81cc9d initialized
+2026-07-24 05:20:25 [info] [manager] [session-manager] Loaded session: cfb416ec-d151-4e3f-81c9-7342ca81cc9d (Yoana) on port 3109
+2026-07-24 05:20:25 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 05:20:25 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 05:20:58 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Disconnected
+2026-07-24 05:20:59 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Connecting...
+2026-07-24 05:20:59 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 05:21:01 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Connected: 6281931966042:12@s.whatsapp.net (Unknown)
+2026-07-24 06:58:44 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Disconnected (code: 428), reconnecting in 5000ms...
+2026-07-24 06:58:49 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Connecting...
+2026-07-24 06:58:49 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 06:58:51 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Connected: 6281931966042:12@s.whatsapp.net (Unknown)
+2026-07-24 09:06:14 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Session cfb416ec-d151-4e3f-81c9-7342ca81cc9d initialized
+2026-07-24 09:06:14 [info] [manager] [session-manager] Loaded session: cfb416ec-d151-4e3f-81c9-7342ca81cc9d (Yoana) on port 3109
+2026-07-24 09:06:14 [info] [manager] [session-manager] SessionManager initialized
+2026-07-24 09:06:14 [info] 
+╔═══════════════════════════════════════════════════════════╗
+║  WhatsApp CS Framework v1.0.0                             ║
+║  Running on http://0.0.0.0:3000                            ║
+║  Environment: production                                    ║
+╚═══════════════════════════════════════════════════════════╝
+            
+2026-07-24 09:06:52 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Connecting...
+2026-07-24 09:06:53 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Using Baileys v2.3000.1035194821, latest: true
+2026-07-24 09:06:55 [info] [cfb416ec-d151-4e3f-81c9-7342ca81cc9d] [session] Connected: 6281931966042:12@s.whatsapp.net (Unknown)

@@ -1,0 +1,429 @@
+<%- include('partials/header') %>
+<section class="session-dashboard">
+    <div class="container">
+        <div class="session-header">
+            <div class="session-info">
+                <h1><%= session.displayName || session.id.substring(0, 8) %></h1>
+                <p><%= session.phoneNumber || 'No phone number' %></p>
+            </div>
+            <div class="session-controls">
+                <% if (!session.connected && session.state !== 'connecting') { %>
+                <button class="btn btn-success" onclick="sessionAction('connect')">🔗 Connect</button>
+                <% } %>
+                <% if (session.connected) { %>
+                <button class="btn btn-warning" onclick="sessionAction('disconnect')">⏹ Disconnect</button>
+                <button class="btn btn-info" onclick="sessionAction('reconnect')">🔄 Reconnect</button>
+                <% } %>
+                <button class="btn btn-secondary" onclick="sessionAction('restart')">🔃 Restart</button>
+                <a href="/" class="btn btn-outline">← Dashboard</a>
+            </div>
+        </div>
+
+        <div class="status-grid">
+            <div class="status-card">
+                <h4>Status</h4>
+                <div class="status-badge-large status-<%= session.state %>"><%= session.state %></div>
+            </div>
+            <div class="status-card">
+                <h4>Phone</h4>
+                <div class="status-value"><%= session.phoneNumber || '—' %></div>
+            </div>
+            <div class="status-card">
+                <h4>Uptime</h4>
+                <div class="status-value" id="uptime-display" data-uptime-start="<%= session.startTime || '' %>"><%= session.uptimeFormatted %></div>
+            </div>
+            <div class="status-card">
+                <h4>Messages</h4>
+                <div class="status-value" id="message-count"><%= session.messageCount %></div>
+            </div>
+        </div>
+
+        <div class="qr-section" id="qr-section" style="display:<%= session.qrCode && !session.connected ? 'block' : 'none' %>">
+            <h3>🔐 Scan QR Code</h3>
+            <div class="qr-container">
+                <img id="qr-image" src="" alt="QR Code" />
+                <p>Open WhatsApp on your phone → Linked Devices → Link a Device</p>
+                <button class="btn btn-sm btn-outline" onclick="regenerateQR()">🔄 Refresh QR</button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="messages">💬 Messages</button>
+            <button class="tab" data-tab="products">🛍️ Products</button>
+            <button class="tab" data-tab="knowledge">📚 Knowledge</button>
+            <button class="tab" data-tab="persona">🧑 Persona</button>
+            <button class="tab" data-tab="send">📨 Send</button>
+        </div>
+
+        <!-- Messages Tab -->
+        <div class="tab-content active" id="tab-messages">
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>Recent Messages</h3>
+                    <button class="btn btn-sm btn-outline" onclick="refreshMessages()">🔄 Refresh</button>
+                </div>
+                <div class="message-list" id="message-list">
+                    <div class="empty-state">Loading messages...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Tab - Simplified: single textarea -->
+        <div class="tab-content" id="tab-products">
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>Products</h3>
+                </div>
+                <div class="form-group">
+                    <label>Product Data (JSON or free text)</label>
+                    <textarea id="products-data" class="form-control" rows="15" placeholder='Paste product data as JSON array or free text. Example:
+[
+  {"name": "Product A", "price": 100000, "description": "Description A"},
+  {"name": "Product B", "price": 250000, "description": "Description B"}
+]'></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="saveProducts()">💾 Save Products</button>
+                <div id="products-status" style="margin-top:0.5rem;font-size:0.9rem;"></div>
+                <div id="products-list" style="margin-top:1rem;"></div>
+            </div>
+        </div>
+
+        <!-- Knowledge Tab -->
+        <div class="tab-content" id="tab-knowledge">
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>Knowledge Base</h3>
+                    <button class="btn btn-sm btn-primary" onclick="showKnowledgeForm()">+ Add Article</button>
+                </div>
+                <div id="knowledge-list"></div>
+            </div>
+        </div>
+
+        <!-- Persona Tab - Simplified: single textarea -->
+        <div class="tab-content" id="tab-persona">
+            <div class="panel">
+                <div class="panel-header"><h3>CS Persona</h3></div>
+                <div class="form-group">
+                    <label>Persona Prompt (system instructions for AI)</label>
+                    <textarea id="persona-prompt" class="form-control" rows="20" placeholder='Define the AI persona, tone, guidelines, and behavior here. Example:
+
+Anda adalah Juminten, AI Customer Service profesional untuk toko online kami.
+
+PERAN: Sales Consultant & Customer Support
+NAMA: Juminten
+TONE: Ramah, membantu, tidak memaksa, empatik
+
+PEDOMAN:
+- Selalu sapu dengan hangat: "Halo Kak 😊"
+- Pahami kebutuhan sebelum menawarkan produk
+- Berikan solusi, bukan sekadar menjual
+- Jujur tentang stok/harga/spesifikasi
+- Hindari jargon teknis yang membingungkan
+- Dorong keputusan beli secara natural: "Kalau cocok, saya bantu pesan ya"
+- Tutup dengan ramah: "Terima kasih Kak, semoga bermanfaat!"
+
+PRODUK: Gunakan data dari knowledge base produk
+HARGA: Selalu sebutkan harga dalam Rupiah (Rp)
+GARANSI: Berikan info garansi resmi jika ada'></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="savePersona()" style="margin-top:0.5rem;">💾 Save Persona</button>
+                <div id="persona-status" style="margin-top:0.5rem;font-size:0.9rem;"></div>
+            </div>
+        </div>
+
+        <!-- Send Tab -->
+        <div class="tab-content" id="tab-send">
+            <div class="panel">
+                <div class="panel-header"><h3>Send Message</h3></div>
+                <form id="send-form" onsubmit="sendMessage(event)">
+                    <div class="form-group">
+                        <label>Phone Number (with country code)</label>
+                        <input type="text" id="send-to" class="form-control" placeholder="e.g., 6281234567890">
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea id="send-content" class="form-control" rows="4" placeholder="Type your message..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">📨 Send</button>
+                </form>
+                <div id="send-result" style="margin-top:1rem;"></div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<script>
+const sessionId = '<%= session.id %>';
+const socket = io();
+socket.emit('join-session', sessionId);
+
+// === CUSTOM DIALOG SYSTEM ===
+let dialogResolve = null;
+function dialog(html) {
+    return new Promise((resolve) => {
+        dialogResolve = resolve;
+        const d = document.getElementById('custom-dialog');
+        const b = d.querySelector('.dialog-body');
+        b.innerHTML = html;
+        d.classList.add('active');
+        const input = d.querySelector('input, textarea, select');
+        if (input) setTimeout(() => input.focus(), 100);
+    });
+}
+function dialogClose(result) {
+    document.getElementById('custom-dialog').classList.remove('active');
+    if (dialogResolve) {
+        dialogResolve(result);
+        dialogResolve = null;
+    }
+}
+function dialogOk() {
+    const inputs = document.querySelectorAll('#custom-dialog .dialog-input');
+    const data = {};
+    inputs.forEach(i => {
+        if (i.type === 'checkbox') data[i.name || i.id] = i.checked;
+        else data[i.name || i.id] = i.value;
+    });
+    dialogClose(data);
+}
+
+// Dialog shortcut functions
+async function dialogAlert(msg) {
+    await dialog(`<p>${msg}</p><div class="dialog-actions"><button class="btn btn-primary" onclick="dialogClose(true)">OK</button></div>`);
+}
+async function dialogConfirm(msg) {
+    return await dialog(`<p>${msg}</p><div class="dialog-actions"><button class="btn btn-secondary" onclick="dialogClose(false)">Cancel</button><button class="btn btn-primary" onclick="dialogClose(true)">OK</button></div>`);
+}
+async function dialogPrompt(label, placeholder) {
+    return await dialog(`<p>${label}</p><input class="dialog-input" id="dialog-prompt-value" placeholder="${placeholder}" /><div class="dialog-actions"><button class="btn btn-secondary" onclick="dialogClose(null)">Cancel</button><button class="btn btn-primary" onclick="dialogClose(document.getElementById('dialog-prompt-value').value)">OK</button></div>`);
+}
+async function dialogForm(title, fields) {
+    let html = fields.map(f => {
+        if (f.type === 'textarea') return `<label style="font-size:0.9rem;font-weight:500;display:block;margin-bottom:2px;">${f.label}</label><textarea class="dialog-input" id="dialog-${f.id}" rows="${f.rows||3}" placeholder="${f.placeholder||''}">${f.value||''}</textarea>`;
+        if (f.type === 'select') {
+            const opts = (f.options||[]).map(o => `<option value="${o.value}" ${f.value===o.value?'selected':''}>${o.label}</option>`).join('');
+            return `<label style="font-size:0.9rem;font-weight:500;display:block;margin-bottom:2px;">${f.label}</label><select class="dialog-input" id="dialog-${f.id}">${opts}</select>`;
+        }
+        return `<label style="font-size:0.9rem;font-weight:500;display:block;margin-bottom:2px;">${f.label}</label><input class="dialog-input" id="dialog-${f.id}" type="${f.type||'text'}" placeholder="${f.placeholder||''}" value="${f.value||''}" />`;
+    }).join('');
+    html += `<div class="dialog-actions"><button class="btn btn-secondary" onclick="dialogClose(null)">Cancel</button><button class="btn btn-primary" onclick="dialogFormSubmit()">Save</button></div>`;
+    return await dialog(html);
+}
+async function dialogFormSubmit() {
+    const data = {};
+    document.querySelectorAll('#custom-dialog .dialog-input').forEach(i => {
+        data[i.id.replace('dialog-','')] = i.value;
+    });
+    dialogClose(data);
+}
+
+// === TABS ===
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+        if (tab.dataset.tab === 'products') loadProducts();
+        if (tab.dataset.tab === 'knowledge') loadKnowledge();
+        if (tab.dataset.tab === 'persona') loadPersona();
+    });
+});
+
+// === SESSION ACTIONS ===
+async function sessionAction(action) {
+    try {
+        const res = await fetch('/api/session/' + sessionId + '/' + action, { method: 'POST' });
+        const data = await res.json();
+        if (data.error) dialogAlert('Error: ' + data.error);
+    } catch (err) { dialogAlert('Error: ' + err.message); }
+}
+
+async function regenerateQR() {
+    await fetch('/api/session/' + sessionId + '/qrcode', { method: 'GET' });
+    loadQR();
+}
+
+async function loadQR() {
+    const res = await fetch('/api/session/' + sessionId + '/qrcode');
+    const data = await res.json();
+    if (data.qrImage) {
+        document.getElementById('qr-section').style.display = 'block';
+        document.getElementById('qr-image').src = data.qrImage;
+    } else {
+        document.getElementById('qr-section').style.display = 'block';
+        document.getElementById('qr-image').alt = 'QR not ready yet — waiting...';
+        document.getElementById('qr-image').src = '';
+        setTimeout(loadQR, 3000);
+    }
+}
+
+// Socket events
+socket.on('session:qr', (data) => { if (data.sessionId === sessionId) loadQR(); });
+socket.on('session:status', (data) => { if (data.sessionId === sessionId) setTimeout(() => location.reload(), 500); });
+socket.on('session:ready', (data) => { if (data.sessionId === sessionId) document.getElementById('qr-section').style.display = 'none'; });
+socket.on('session:message', (data) => { if (data.sessionId === sessionId) appendMessage(data); });
+
+// === MESSAGES ===
+async function refreshMessages() {
+    const res = await fetch('/api/session/' + sessionId + '/messages');
+    const msgs = await res.json();
+    const list = document.getElementById('message-list');
+    if (msgs.length === 0) { list.innerHTML = '<div class="empty-state">No messages yet</div>'; return; }
+    list.innerHTML = msgs.reverse().map(m => `
+        <div class="message ${m.isOutgoing ? 'outgoing' : 'incoming'}">
+            <div class="message-header">
+                <span class="message-from">${escapeHtml(m.user || m.to || 'System')}</span>
+                <span class="message-time">${new Date(m.timestamp).toLocaleTimeString()}</span>
+            </div>
+            <div class="message-content">${escapeHtml(m.content || '')}</div>
+        </div>
+    `).join('');
+    list.scrollTop = list.scrollHeight;
+}
+
+function appendMessage(msg) {
+    const list = document.getElementById('message-list');
+    const empty = list.querySelector('.empty-state');
+    if (empty) empty.remove();
+    const div = document.createElement('div');
+    div.className = 'message ' + (msg.isOutgoing ? 'outgoing' : 'incoming');
+    div.innerHTML = '<div class="message-header"><span class="message-from">' + escapeHtml(msg.user || msg.to || 'System') + '</span><span class="message-time">' + new Date(msg.timestamp).toLocaleTimeString() + '</span></div><div class="message-content">' + escapeHtml(msg.content || '') + '</div>';
+    list.appendChild(div);
+    list.scrollTop = list.scrollHeight;
+    document.getElementById('message-count').textContent = parseInt(document.getElementById('message-count').textContent) + 1;
+}
+
+function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+// === SEND MESSAGE ===
+async function sendMessage(e) {
+    e.preventDefault();
+    const to = document.getElementById('send-to').value.trim();
+    const content = document.getElementById('send-content').value.trim();
+    if (!to || !content) return dialogAlert('Fill in all fields');
+    const res = await fetch('/api/session/' + sessionId + '/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: to + '@s.whatsapp.net', content })
+    });
+    const data = await res.json();
+    document.getElementById('send-result').innerHTML = data.success ? '<p class="text-success">✓ Sent!</p>' : '<p class="text-danger">✗ Failed: ' + (data.error || 'Unknown') + '</p>';
+}
+
+// === PRODUCTS ===
+async function loadProducts() {
+    const res = await fetch('/api/session/' + sessionId + '/products');
+    const products = await res.json();
+    const list = document.getElementById('products-list');
+    if (!products.length) { list.innerHTML = '<div class="empty-state">No products</div>'; return; }
+    list.innerHTML = products.map(p => '<div class="product-card"><h4>' + escapeHtml(p.name) + '</h4><p>Rp ' + (p.price||0).toLocaleString() + '</p><p>' + escapeHtml(p.description||'') + '</p><button class="btn btn-sm btn-danger" onclick="deleteProduct(\'' + p.id + '\')">Delete</button></div>').join('');
+    // Also fill the textarea with current data
+    document.getElementById('products-data').value = JSON.stringify(products, null, 2);
+}
+
+async function saveProducts() {
+    const data = document.getElementById('products-data').value.trim();
+    if (!data) return dialogAlert('No data to save');
+    let products;
+    try {
+        products = JSON.parse(data);
+        if (!Array.isArray(products)) throw new Error('Must be an array');
+    } catch (e) {
+        return dialogAlert('Invalid JSON: ' + e.message);
+    }
+    // Delete all existing products first
+    const existingRes = await fetch('/api/session/' + sessionId + '/products');
+    const existing = await existingRes.json();
+    for (const p of existing) {
+        await fetch('/api/session/' + sessionId + '/products/' + p.id, { method: 'DELETE' });
+    }
+    // Create new products
+    for (const p of products) {
+        await fetch('/api/session/' + sessionId + '/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: p.name,
+                price: parseInt(p.price)||0,
+                stock: parseInt(p.stock)||0,
+                description: p.description||'',
+                category: p.category||'general'
+            })
+        });
+    }
+    document.getElementById('products-status').textContent = '✅ Saved ' + products.length + ' products';
+    setTimeout(() => document.getElementById('products-status').textContent = '', 2000);
+    loadProducts();
+}
+
+async function deleteProduct(id) {
+    const ok = await dialogConfirm('Delete this product?');
+    if (ok) {
+        await fetch('/api/session/' + sessionId + '/products/' + id, { method: 'DELETE' });
+        loadProducts();
+    }
+}
+
+// === KNOWLEDGE ===
+async function loadKnowledge() {
+    const res = await fetch('/api/session/' + sessionId + '/knowledge');
+    const list = document.getElementById('knowledge-list');
+    const items = await res.json();
+    if (!items.length) { list.innerHTML = '<div class="empty-state">No articles</div>'; return; }
+    list.innerHTML = items.map(k => '<div class="product-card"><h4>' + escapeHtml(k.title) + '</h4><p>Category: ' + escapeHtml(k.category) + '</p><button class="btn btn-sm btn-danger" onclick="deleteKnowledge(\'' + k.id + '\')">Delete</button></div>').join('');
+}
+
+async function showKnowledgeForm() {
+    const data = await dialogForm('Add Knowledge Article', [
+        { id: 'title', label: 'Title', type: 'text', placeholder: 'Article title' },
+        { id: 'category', label: 'Category', type: 'select', options: [{value:'FAQ',label:'FAQ'},{value:'Shipping',label:'Shipping'},{value:'Warranty',label:'Warranty'},{value:'General',label:'General'}] },
+        { id: 'content', label: 'Content', type: 'textarea', rows: 5, placeholder: 'Article content' },
+        { id: 'keywords', label: 'Keywords (comma-separated)', type: 'text', placeholder: 'keyword1, keyword2' }
+    ]);
+    if (!data) return;
+    await fetch('/api/session/' + sessionId + '/knowledge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            title: data.title, category: data.category||'general', content: data.content,
+            keywords: data.keywords ? data.keywords.split(',').map(k=>k.trim()) : []
+        })
+    });
+    loadKnowledge();
+}
+
+async function deleteKnowledge(id) {
+    const ok = await dialogConfirm('Delete this article?');
+    if (ok) {
+        await fetch('/api/session/' + sessionId + '/knowledge/' + id, { method: 'DELETE' });
+        loadKnowledge();
+    }
+}
+
+// === PERSONA ===
+async function loadPersona() {
+    const res = await fetch('/api/session/' + sessionId + '/persona');
+    const persona = await res.json();
+    const prompt = persona?.persona?.prompt || '';
+    document.getElementById('persona-prompt').value = prompt;
+}
+
+async function savePersona() {
+    const prompt = document.getElementById('persona-prompt').value.trim();
+    await fetch('/api/session/' + sessionId + '/persona', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+    });
+    document.getElementById('persona-status').textContent = '✅ Persona saved';
+    setTimeout(() => document.getElementById('persona-status').textContent = '', 2000);
+}
+
+// === INITIAL LOAD ===
+refreshMessages();
+const isDisconnected = '<%= session.state %>' !== 'connected';
+if (isDisconnected) loadQR();
+</script>
+<%- include('partials/footer') %>

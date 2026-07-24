@@ -1,0 +1,389 @@
+<%- include('partials/header') %>
+<section class="dashboard">
+    <div class="container">
+        <header class="page-header">
+            <h1>WhatsApp CS Dashboard</h1>
+            <button class="btn btn-primary" onclick="openCreateModal()">+ Add Session</button>
+        </header>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📱</div>
+                <div class="stat-info">
+                    <h3><%= sessions.length %></h3>
+                    <p>Total Sessions</p>
+                </div>
+            </div>
+            <div class="stat-card stat-connected">
+                <div class="stat-icon">🟢</div>
+                <div class="stat-info">
+                    <h3><%= sessions.filter(s => s.connected).length %></h3>
+                    <p>Connected</p>
+                </div>
+            </div>
+            <div class="stat-card stat-disconnected">
+                <div class="stat-icon">🔴</div>
+                <div class="stat-info">
+                    <h3><%= sessions.filter(s => !s.connected && s.state !== 'connecting').length %></h3>
+                    <p>Disconnected</p>
+                </div>
+            </div>
+            <div class="stat-card stat-connecting">
+                <div class="stat-icon">🔄</div>
+                <div class="stat-info">
+                    <h3><%= sessions.filter(s => s.state === 'connecting').length %></h3>
+                    <p>Connecting</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Queue Stats -->
+        <div class="stats-grid" style="margin-top: 1rem;">
+            <div class="stat-card">
+                <div class="stat-icon">🤖</div>
+                <div class="stat-info">
+                    <h3 id="queue-pending">0</h3>
+                    <p>Queue Pending</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚙️</div>
+                <div class="stat-info">
+                    <h3 id="queue-active">0</h3>
+                    <p>Active</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-info">
+                    <h3 id="queue-completed">0</h3>
+                    <p>Completed</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">❌</div>
+                <div class="stat-info">
+                    <h3 id="queue-failed">0</h3>
+                    <p>Failed</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sessions Table -->
+        <section class="sessions-section">
+            <h2>Sessions</h2>
+            <% if (sessions.length === 0) { %>
+            <div class="empty-state">
+                <div class="empty-icon">📱</div>
+                <h3>No Sessions Yet</h3>
+                <p>Create your first WhatsApp session to get started.</p>
+                <button class="btn btn-primary" onclick="openCreateModal()">+ Create Session</button>
+            </div>
+            <% } else { %>
+            <div class="table-responsive">
+                <table class="table" id="sessions-table">
+                    <thead>
+                        <tr>
+                            <th>Display Name</th>
+                            <th>Internal ID</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Port</th>
+                            <th>Uptime</th>
+                            <th>Messages</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% sessions.forEach(s => { %>
+                        <tr data-session-id="<%= s.id %>">
+                            <td>
+                                <span class="session-display-name"><%= s.name || s.id.substring(0, 8) %></span>
+                            </td>
+                            <td>
+                                <code class="session-id"><%= s.id %></code>
+                            </td>
+                            <td><%= s.phoneNumber || '—' %></td>
+                            <td>
+                                <span class="badge badge-<%= s.connected ? 'success' : (s.state === 'connecting' ? 'warning' : 'danger') %>">
+                                    <%= s.state %>
+                                </span>
+                            </td>
+                            <td><%= s.port || '—' %></td>
+                            <td><%= s.uptimeFormatted || '0s' %></td>
+                            <td><%= s.messageCount || 0 %></td>
+                            <td class="actions">
+                                <a href="/session/<%= s.id %>" class="btn btn-sm btn-primary" title="Open Dashboard">📊</a>
+                                <button class="btn-icon" onclick="editSession('<%= s.id %>')" title="Edit">✏️</button>
+                                <button class="btn-icon btn-icon-danger" onclick="confirmDelete('<%= s.id %>', '<%= (s.name || s.id.substring(0, 8)).replace(/'/g, "\\'") %>')" title="Delete">🗑️</button>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+            <% } %>
+        </section>
+    </div>
+</section>
+
+<!-- Create/Edit Session Modal -->
+<div class="modal-overlay" id="session-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modal-title">Create Session</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="session-form">
+                <input type="hidden" id="session-id" name="id">
+                <div class="form-group">
+                    <label for="session-name">Display Name <span class="required">*</span></label>
+                    <input type="text" id="session-name" name="name" class="form-control" placeholder="e.g., Customer Service Jakarta" required>
+                    <small class="form-hint">Human-friendly name for this session</small>
+                </div>
+                <div class="form-group">
+                    <label for="session-description">Description</label>
+                    <textarea id="session-description" name="description" class="form-control" rows="3" placeholder="Optional description..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Auto Reconnect</label>
+                        <select id="session-autoreconnect" name="autoReconnect" class="form-control">
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Auto Reply</label>
+                        <select id="session-autoreply" name="autoReply" class="form-control">
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveSession()">Save Session</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="delete-modal">
+    <div class="modal modal-small">
+        <div class="modal-header">
+            <h3>Delete Session</h3>
+            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete session <strong id="delete-session-name"></strong>?</p>
+            <p class="warning-text">This will permanently remove the WhatsApp authentication, all messages, products, knowledge base, and configuration. This action cannot be undone.</p>
+            <input type="hidden" id="delete-session-id">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn btn-danger" onclick="deleteSession()">Delete Permanently</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const socket = io();
+let editingSessionId = null;
+
+// Custom Dialog (reuse from footer)
+let _dialogResolve = null;
+function _dialogOpen(html) {
+    return new Promise(r => {
+        _dialogResolve = r;
+        document.querySelector('#custom-dialog .dialog-body').innerHTML = html;
+        document.getElementById('custom-dialog').classList.add('active');
+    });
+}
+function _dialogClose(val) {
+    document.getElementById('custom-dialog').classList.remove('active');
+    if (_dialogResolve) { _dialogResolve(val); _dialogResolve = null; }
+}
+
+// Modal Management
+function openCreateModal() {
+    editingSessionId = null;
+    document.getElementById('modal-title').textContent = 'Create Session';
+    document.getElementById('session-form').reset();
+    document.getElementById('session-id').value = '';
+    document.getElementById('session-name').value = '';
+    document.getElementById('session-description').value = '';
+    document.getElementById('session-autoreconnect').value = 'true';
+    document.getElementById('session-autoreply').value = 'true';
+    document.getElementById('session-modal').classList.add('active');
+}
+
+function editSession(id) {
+    editingSessionId = id;
+    document.getElementById('modal-title').textContent = 'Edit Session';
+    document.getElementById('session-id').value = id;
+    
+    // Fetch current session data
+    fetch('/api/session/' + id)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('session-name').value = data.name || data.displayName || '';
+            document.getElementById('session-description').value = data.description || '';
+            document.getElementById('session-autoreconnect').value = data.autoReconnect ? 'true' : 'false';
+            document.getElementById('session-autoreply').value = data.autoReply ? 'true' : 'false';
+        })
+        .catch(() => {
+            // Fallback if API fails
+            document.getElementById('session-name').value = displayName || '';
+        });
+    
+    document.getElementById('session-modal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('session-modal').classList.remove('active');
+    editingSessionId = null;
+}
+
+function confirmDelete(id, displayName) {
+    document.getElementById('delete-session-id').value = id;
+    document.getElementById('delete-session-name').textContent = displayName || id.substring(0, 8);
+    document.getElementById('delete-modal').classList.add('active');
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.remove('active');
+}
+
+// Save Session (Create or Update)
+async function saveSession() {
+    const id = document.getElementById('session-id').value;
+    const name = document.getElementById('session-name').value.trim();
+    const description = document.getElementById('session-description').value.trim();
+    const autoReconnect = document.getElementById('session-autoreconnect').value === 'true';
+    const autoReply = document.getElementById('session-autoreply').value === 'true';
+
+    if (!name) {
+        await _dialogOpen('<p>Display Name is required</p><div class="dialog-actions"><button class="btn btn-primary" onclick="_dialogClose(true)">OK</button></div>');
+        return;
+    }
+
+    const isEdit = !!id;
+    const url = isEdit ? '/api/session/' + id : '/api/session';
+    const method = isEdit ? 'PUT' : 'POST';
+    const body = isEdit ? { name, description, autoReconnect, autoReply } : { name, description, autoReconnect, autoReply };
+
+    try {
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        
+        if (data.error) throw new Error(data.error);
+        
+        closeModal();
+        location.reload();
+    } catch (err) {
+        await _dialogOpen('<p>Failed: ' + err.message + '</p><div class="dialog-actions"><button class="btn btn-primary" onclick="_dialogClose(true)">OK</button></div>');
+    }
+}
+
+// Delete Session
+async function deleteSession() {
+    const id = document.getElementById('delete-session-id').value;
+    if (!id) return;
+
+    try {
+        const res = await fetch('/api/session/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        closeDeleteModal();
+        location.reload();
+    } catch (err) {
+        alert('Failed: ' + err.message);
+    }
+}
+
+// Real-time updates — update in-place, never location.reload()
+socket.on('connect', () => console.log('[WS] connected'));
+
+socket.on('sessions', () => refreshSessionList());
+socket.on('session:created', () => refreshSessionList());
+socket.on('session:deleted', () => refreshSessionList());
+socket.on('session:status', () => refreshSessionList());
+
+// AI Queue Stats — update in-place
+socket.on('queue:stats', (stats) => {
+    document.getElementById('queue-pending').textContent = stats.pending ?? 0;
+    document.getElementById('queue-active').textContent = stats.active ?? 0;
+    document.getElementById('queue-completed').textContent = stats.completed ?? 0;
+    document.getElementById('queue-failed').textContent = stats.failed ?? 0;
+});
+
+// Refresh session list and stats via API tanpa reload halaman
+async function refreshSessionList() {
+    try {
+        const [sessionsRes, healthRes] = await Promise.all([
+            fetch('/api/sessions'),
+            fetch('/health')
+        ]);
+        const sessionsData = await sessionsRes.json();
+        const healthData = await healthRes.json();
+        
+        // Update stats cards
+        const sessions = sessionsData.sessions || [];
+        const connected = sessions.filter(s => s.connected).length;
+        const disconnected = sessions.filter(s => !s.connected && s.state !== 'connecting').length;
+        const connecting = sessions.filter(s => s.state === 'connecting').length;
+        
+        const cards = document.querySelectorAll('#stats-grid .stat-card h3');
+        if (cards.length >= 4) {
+            cards[0].textContent = sessions.length;
+            cards[1].textContent = connected;
+            cards[2].textContent = disconnected;
+            cards[3].textContent = connecting;
+        }
+        
+        // Update session table
+        const tbody = document.querySelector('#sessions-table tbody');
+        if (!tbody) return; // empty state
+            
+        tbody.innerHTML = sessions.map(s => {
+            const displayName = s.name || s.id.substring(0, 8);
+            const escName = (displayName || '').replace(/'/g, "\\'");
+            const statusClass = s.connected ? 'success' : (s.state === 'connecting' ? 'warning' : 'danger');
+            return `<tr data-session-id="${s.id}">
+                <td><span class="session-display-name">${displayName}</span></td>
+                <td><code class="session-id">${s.id}</code></td>
+                <td>${s.phoneNumber || '—'}</td>
+                <td><span class="badge badge-${statusClass}">${s.state}</span></td>
+                <td>${s.port || '—'}</td>
+                <td>${s.uptimeFormatted || '0s'}</td>
+                <td>${s.messageCount || 0}</td>
+                <td class="actions">
+                    <a href="/session/${s.id}" class="btn btn-sm btn-primary">Dashboard</a>
+                    <button class="btn btn-sm btn-outline" onclick="editSession('${s.id}', '${escName}')">Edit</button>
+                    <button class="btn btn-sm btn-danger" onclick="confirmDelete('${s.id}', '${escName}')">Delete</button>
+                </td>
+            </tr>`;
+        }).join('');
+    } catch (e) {
+        // Silent — don't reload on transient errors
+    }
+}
+
+// Close modals on overlay click
+document.getElementById('session-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'session-modal') closeModal();
+});
+document.getElementById('delete-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'delete-modal') closeDeleteModal();
+});
+</script>
+<%- include('partials/footer') %>
