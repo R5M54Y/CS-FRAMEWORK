@@ -62,6 +62,33 @@ const config = {
   enableKnowledge: process.env.ENABLE_KNOWLEDGE !== 'false',
   enablePersona: process.env.ENABLE_PERSONA !== 'false',
 
+  // Humanizer
+  humanizer: {
+    enabled: process.env.HUMANIZER_ENABLED !== 'false',
+    typing: {
+      min: parseInt(process.env.HUMANIZER_TYPING_MIN, 10) || 800,
+      max: parseInt(process.env.HUMANIZER_TYPING_MAX, 10) || 5000,
+      speedWPM: parseInt(process.env.HUMANIZER_TYPING_SPEED_WPM, 10) || 28,
+    },
+    readDelay: {
+      min: parseInt(process.env.HUMANIZER_READ_DELAY_MIN, 10) || 300,
+      max: parseInt(process.env.HUMANIZER_READ_DELAY_MAX, 10) || 1200,
+    },
+    splitMessage: {
+      enabled: process.env.HUMANIZER_SPLIT_ENABLED !== 'false',
+      maxMessages: parseInt(process.env.HUMANIZER_SPLIT_MAX, 10) || 3,
+    },
+    randomPause: {
+      enabled: process.env.HUMANIZER_PAUSE_ENABLED !== 'false',
+      min: parseInt(process.env.HUMANIZER_PAUSE_MIN, 10) || 200,
+      max: parseInt(process.env.HUMANIZER_PAUSE_MAX, 10) || 1500,
+    },
+    queue: {
+      maxConcurrent: parseInt(process.env.HUMANIZER_QUEUE_MAX_CONCURRENT, 10) || 1,
+      minTime: parseInt(process.env.HUMANIZER_QUEUE_MIN_TIME, 10) || 500,
+    },
+  },
+
   // Derived
   get isDev() { return this.nodeEnv === 'development'; },
   get isProd() { return this.nodeEnv === 'production'; }

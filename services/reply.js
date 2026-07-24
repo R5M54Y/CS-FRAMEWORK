@@ -4,10 +4,12 @@ const PromptBuilder = require('./prompt-builder');
 const { createQueue, getQueue } = require('./ai-queue');
 const { createSessionLogger } = require('../utils/logger');
 const config = require('../config');
+const HumanizerService = require('../core/humanizer/HumanizerService');
 
 /**
- * Reply Service — orchestrates the full AI reply flow
+ * ReplyService — orchestrates the full AI reply flow
  * All AI requests go through the AI Request Queue.
+ * Now integrates HumanizerService for human-like message delivery.
  */
 class ReplyService {
   constructor(sessionManager) {
@@ -15,7 +17,7 @@ class ReplyService {
     this.promptBuilder = new PromptBuilder();
     this.log = createSessionLogger('reply', 'reply-service');
     this.maxHistory = 20;
-    
+
     // Create queue singleton with config
     this.queue = createQueue({
       concurrency: config.aiQueueConcurrency,
@@ -24,10 +26,13 @@ class ReplyService {
       baseDelay: config.aiQueueBaseDelay,
       maxDelay: config.aiQueueMaxDelay
     });
+
+    // Humanizer instance — handles typing, presence, delays, splitting
+    this.humanizer = new HumanizerService(sessionManager, config.humanizer);
   }
 
   /**
-   * Process incoming message → build prompt → enqueue → AI → reply
+   * Process incoming message → build prompt → enqueue → AI → reply via Humanizer
    */
   async processIncomingMessage(sessionId, sender, message) {
     const session = this.sessionManager.getSession(sessionId);
@@ -62,8 +67,14 @@ class ReplyService {
       });
 
       if (response && !response.startsWith('[')) {
-        await session.sendMessage(from, response);
-        this.log.info(`AI reply sent to ${from}`);
+        // HUMANIZER INTEGRATION: Send through Humanizer instead of direct session.sendMessage
+        await this.humanizer.send({
+          sessionId,
+          to: from,
+          text: response,
+          options: {}
+        });
+        this.log.info(`AI reply sent via Humanizer to ${from}`);
       } else {
         this.log.warn(`AI error response: ${response}`);
         await this._fallback(session, from, persona);
@@ -72,24 +83,6 @@ class ReplyService {
       this.log.error(`Reply error: ${err.message}`);
       await this._fallback(session, from, persona);
     }
-  }
-
-  _buildHistory(messages, contactJid) {
-    const history = [];
-    for (const msg of messages) {
-      if (msg.from === contactJid || msg.to === contactJid) {
-        history.push({
-          role: msg.isOutgoing ? 'assistant' : 'user',
-          content: msg.content
-        });
-      }
-    }
-    return history.slice(-this.maxHistory);
-  }
-
-  async _fallback(session, to, persona) {
-    const fallback = persona?.fallback || 'Maaf, saya tidak memahami. Bisa diulang? 😊';
-    await session.sendMessage(to, fallback);
   }
 
   /**
@@ -104,6 +97,24 @@ class ReplyService {
    */
   setQueueConcurrency(concurrency) {
     this.queue.setConcurrency(concurrency);
+  }
+
+  async _fallback(session, to, persona) {
+    const fallback = persona?.fallback || 'Maaf, saya tidak memahami. Bisa diulang? 😊';
+    await session.sendMessage(to, fallback);
+  }
+
+  _buildHistory(messages, contactJid) {
+    const history = [];
+    for (const msg of messages) {
+      if (msg.from === contactJid || msg.to === contactJid) {
+        history.push({
+          role: msg.isOutgoing ? 'assistant' : 'user',
+          content: msg.content
+        });
+      }
+    }
+    return history.slice(-this.maxHistory);
   }
 }
 

@@ -14,6 +14,13 @@
       "tone": "friendly",
       "createdAt": "2026-07-23T22:05:58.566Z",
       "updatedAt": "2026-07-23T22:05:58.566Z"
+    },
+    {
+      "id": "d73813e6-bbd6-4871-ac68-5e2891ae19fe",
+      "role": "Customer Service",
+      "tone": "friendly",
+      "createdAt": "2026-07-24T09:18:25.711Z",
+      "updatedAt": "2026-07-24T09:18:25.711Z"
     }
   ]
 }

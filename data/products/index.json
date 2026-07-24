@@ -1,22 +1,3 @@
 {
-  "products": [
-    {
-      "id": "c142a679-ec00-48ae-915b-36b9b415dd3b",
-      "name": "Bulk A",
-      "price": 10000,
-      "category": "general",
-      "stock": 0,
-      "createdAt": "2026-07-23T20:52:54.365Z",
-      "updatedAt": "2026-07-23T20:52:54.365Z"
-    },
-    {
-      "id": "e9b78f95-7d56-462d-885e-dd4f3829d61c",
-      "name": "Bulk B",
-      "price": 20000,
-      "category": "general",
-      "stock": 0,
-      "createdAt": "2026-07-23T20:52:54.367Z",
-      "updatedAt": "2026-07-23T20:52:54.367Z"
-    }
-  ]
+  "products": []
 }
