@@ -41,6 +41,20 @@ router.get('/session/:id/conversations/:jid/avatar', controller.getAvatar);
 router.post('/session/:id/bot/pause', controller.pauseBot);
 router.post('/session/:id/bot/resume', controller.resumeBot);
 
+// Per-session Persona Prompt
+router.get('/session/:id/persona/prompt', controller.getPersonaPrompt);
+router.put('/session/:id/persona/prompt', controller.savePersonaPrompt);
+
+// Per-session Knowledge Config
+router.get('/session/:id/knowledge-config', controller.getKnowledgeConfig);
+router.put('/session/:id/knowledge-config', controller.saveKnowledgeConfig);
+
+// Knowledge Files
+router.get('/session/:id/knowledge-files', controller.listKnowledgeFiles);
+router.post('/session/:id/knowledge-files', controller.uploadKnowledgeFile);
+router.delete('/session/:id/knowledge-files/:fileId', controller.deleteKnowledgeFile);
+router.get('/session/:id/knowledge-files/:fileId', controller.downloadKnowledgeFile);
+
 // Profile
 router.get('/session/:id/profile', controller.getProfile);
 router.put('/session/:id/profile', controller.updateProfile);
@@ -48,7 +62,6 @@ router.put('/session/:id/profile', controller.updateProfile);
 // Persona
 router.get('/session/:id/persona', controller.getPersona);
 router.put('/session/:id/persona', controller.updatePersona);
-router.put('/session/:id/persona/prompt', controller.savePersonaPrompt);
 
 // Products
 router.get('/session/:id/products', controller.getProducts);

@@ -114,13 +114,15 @@ if (document.getElementById('ai-settings-form')) {
 document.getElementById('global-settings-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = {
-        port: parseInt(document.getElementById('set-port').value),
-        host: document.getElementById('set-host').value,
-        defaultTypingDelay: parseInt(document.getElementById('set-typing-delay').value),
-        defaultReadDelay: parseInt(document.getElementById('set-read-delay').value),
-        autoReply: document.getElementById('set-auto-reply').checked,
-        enableQrTerminal: document.getElementById('set-qr-terminal').checked,
-        enableRealtime: document.getElementById('set-realtime').checked
+        server: {
+            port: parseInt(document.getElementById('set-port').value),
+            host: document.getElementById('set-host').value,
+            defaultTypingDelay: parseInt(document.getElementById('set-typing-delay').value),
+            defaultReadDelay: parseInt(document.getElementById('set-read-delay').value),
+            autoReply: document.getElementById('set-auto-reply').checked,
+            enableQrTerminal: document.getElementById('set-qr-terminal').checked,
+            enableRealtime: document.getElementById('set-realtime').checked
+        }
     };
     const res = await fetch('/api/settings', {
         method: 'PUT',

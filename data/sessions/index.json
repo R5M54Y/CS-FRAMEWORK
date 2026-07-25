@@ -1,18 +1,27 @@
 {
   "sessions": [
     {
-      "id": "82073457-fba9-4684-a131-f1c36ea26f6b",
+      "id": "2d997b69-6e67-4bc3-96d6-280e3b96d36c",
       "name": "Yoana",
-      "port": 3110,
+      "port": 3100,
       "autoReconnect": true,
       "autoReply": true,
       "typingDelay": 1000,
       "readDelay": 500
     },
     {
-      "id": "47cf6d00-f1e9-4e5d-af6c-e067a7ddee39",
-      "name": "RAMSAY",
-      "port": 3111,
+      "id": "6cf281e2-5ae5-4774-abb1-fc7330ab75b7",
+      "name": "Bot Test",
+      "port": 3101,
+      "autoReconnect": true,
+      "autoReply": true,
+      "typingDelay": 1000,
+      "readDelay": 500
+    },
+    {
+      "id": "28228262-c5a7-4413-9064-bc96249ea7f8",
+      "name": "V1",
+      "port": 3102,
       "autoReconnect": true,
       "autoReply": true,
       "typingDelay": 1000,

@@ -10,12 +10,12 @@
   },
   "ai": {
     "endpoint": "http://localhost:20128/v1",
-    "apiKey": "9router",
+    "apiKey": "",
     "model": "oc/deepseek-v4-flash-free"
   },
   "features": {
-    "enableProducts": true,
-    "enableKnowledge": true,
-    "enablePersona": true
+    "enableProducts": false,
+    "enableKnowledge": false,
+    "enablePersona": false
   }
 }

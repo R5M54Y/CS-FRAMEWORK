@@ -35,6 +35,7 @@ class Session extends EventEmitter {
     this.startTime = null;
     this.phoneNumber = null;
     this.displayName = null;
+    this.holder = options.holder || null; // CS holder real name
     this.lastActivity = null;
     this.batteryLevel = null;
     this.pluggedIn = false;
@@ -52,7 +53,7 @@ class Session extends EventEmitter {
     this.readDelay = options.readDelay || config.defaultReadDelay;
     this.autoReply = options.autoReply !== undefined ? options.autoReply : config.autoReply;
     this.botEnabled = options.botEnabled !== false; // Default true, can be paused by human
-    this.botPausedBy = null; // Track who paused the bot
+    this.botPausedBy = options.botPausedBy || null; // Track who paused the bot
 
     this._setupConnectionHandlers();
     this.log.info(`Session ${sessionId} initialized`);
@@ -605,20 +606,20 @@ class Session extends EventEmitter {
   }
 
   async pauseBot(pausedBy = 'human') {
-    this.botEnabled = false;
-    this.botPausedBy = pausedBy;
-    this.log.info(`Bot paused by ${pausedBy}`);
-    this.emit('bot:state', { sessionId: this.id, botEnabled: false, pausedBy });
-    return { success: true, botEnabled: false, pausedBy };
-  }
+      this.botEnabled = false;
+      this.botPausedBy = pausedBy;
+      this.log.info(`Bot paused by ${pausedBy}`);
+      this.emit('bot:state', { sessionId: this.id, botEnabled: false, botPausedBy: pausedBy });
+      return { success: true, botEnabled: false, botPausedBy: pausedBy };
+    }
 
-  async resumeBot() {
-    this.botEnabled = true;
-    this.botPausedBy = null;
-    this.log.info('Bot resumed');
-    this.emit('bot:state', { sessionId: this.id, botEnabled: true, pausedBy: null });
-    return { success: true, botEnabled: true };
-  }
+    async resumeBot() {
+      this.botEnabled = true;
+      this.botPausedBy = null;
+      this.log.info('Bot resumed');
+      this.emit('bot:state', { sessionId: this.id, botEnabled: true, botPausedBy: null });
+      return { success: true, botEnabled: true, botPausedBy: null };
+    }
 
   // ===== STATUS =====
 
@@ -648,6 +649,7 @@ class Session extends EventEmitter {
       autoReply: this.autoReply,
       typingDelay: this.typingDelay,
       readDelay: this.readDelay,
+      holder: this.holder,
       botEnabled: this.botEnabled,
       botPausedBy: this.botPausedBy
     };

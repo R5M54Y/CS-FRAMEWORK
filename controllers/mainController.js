@@ -2,6 +2,8 @@
 
 const { v4: uuidv4 } = require('uuid');
 const QRCode = require('qrcode');
+const path = require("path");
+const { parseUpload } = require("../utils/file-upload");
 const sessionManager = require('../core/session-manager');
 const { ProductManager, KnowledgeManager, ProfileManager, PersonaManager, SettingsManager } = require('../core/storage');
 const config = require('../config');
@@ -67,6 +69,13 @@ class MainController {
     // Bot Control
     this.pauseBot = this.pauseBot.bind(this);
     this.resumeBot = this.resumeBot.bind(this);
+    this.getPersonaPrompt = this.getPersonaPrompt.bind(this);
+    this.getKnowledgeConfig = this.getKnowledgeConfig.bind(this);
+    this.saveKnowledgeConfig = this.saveKnowledgeConfig.bind(this);
+    this.listKnowledgeFiles = this.listKnowledgeFiles.bind(this);
+    this.uploadKnowledgeFile = this.uploadKnowledgeFile.bind(this);
+    this.deleteKnowledgeFile = this.deleteKnowledgeFile.bind(this);
+    this.downloadKnowledgeFile = this.downloadKnowledgeFile.bind(this);
   }
 
   health(req, res) {
@@ -111,19 +120,19 @@ class MainController {
   }
 
   getSettings(req, res) {
-      const settings = this.settingsManager.get();
-      const ai = settings.ai || {};
-      settings.ai = {
-        endpoint: ai.endpoint || config.aiEndpoint,
-        apiKey: ai.apiKey || config.aiApiKey,
-        model: ai.model || config.aiModel,
-        hasApiKey: !!(ai.apiKey || config.aiApiKey),
-        queueConcurrency: config.aiQueueConcurrency,
-        requestTimeout: config.aiRequestTimeout,
-        maxRetries: config.aiQueueMaxRetries
-      };
-      res.json(settings);
-    }
+        const settings = this.settingsManager.get();
+        const ai = settings.ai || {};
+        settings.ai = {
+          endpoint: ai.endpoint || config.aiEndpoint,
+          apiKey: ai.apiKey || config.aiApiKey,
+          model: ai.model || config.aiModel,
+          hasApiKey: !!ai.apiKey || !!config.aiApiKey,
+          queueConcurrency: config.aiQueueConcurrency,
+          requestTimeout: config.aiRequestTimeout,
+          maxRetries: config.aiQueueMaxRetries
+        };
+        res.json(settings);
+      }
 
   updateSettings(req, res) {
     const result = this.settingsManager.set(req.body);
@@ -325,9 +334,8 @@ class MainController {
   async getPersona(req, res) {
     try {
       const { id } = req.params;
-      const result = this.personaManager.get(id);
-      if (!result) return res.status(404).json({ error: 'Persona not found' });
-      res.json(result);
+      const result = sessionManager.getPersonaPrompt(id);
+      res.json(result || { prompt: '', name: '' });
     }
     catch (err) { res.status(500).json({ error: err.message }); }
   }
@@ -335,24 +343,20 @@ class MainController {
   async updatePersona(req, res) {
     try {
       const { id } = req.params;
-      const result = this.personaManager.update(id, req.body);
-      if (!result) return res.status(404).json({ error: 'Persona not found' });
+      const result = sessionManager.setPersonaPrompt(id, req.body);
       res.json(result);
     }
     catch (err) { res.status(500).json({ error: err.message }); }
   }
   
   async savePersonaPrompt(req, res) {
-    try {
-      const { id } = req.params;
-      const { prompt } = req.body;
-      const persona = this.personaManager.get(id);
-      if (!persona) return res.status(404).json({ error: 'Persona not found' });
-      const result = this.personaManager.update(id, { ...persona, prompt });
-      res.json(result);
+      try {
+        const { id } = req.params;
+        const result = sessionManager.setPersonaPrompt(id, req.body);
+        res.json(result);
+      }
+      catch (err) { res.status(500).json({ error: err.message }); }
     }
-    catch (err) { res.status(500).json({ error: err.message }); }
-  }
 
   // ===== PRODUCTS =====
   
@@ -588,6 +592,84 @@ class MainController {
     }
     catch (err) { res.status(500).json({ error: err.message }); }
   }
+  // ===== PERSONA PROMPTS (per-session) =====
+
+  async getPersonaPrompt(req, res) {
+    try {
+      const { id } = req.params;
+      const persona = sessionManager.getPersonaPrompt(id);
+      res.json(persona);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  // ===== KNOWLEDGE CONFIG (per-session) =====
+
+  async getKnowledgeConfig(req, res) {
+    try {
+      const { id } = req.params;
+      const kConfig = sessionManager.getKnowledgeConfig(id);
+      res.json(kConfig);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  async saveKnowledgeConfig(req, res) {
+    try {
+      const { id } = req.params;
+      const result = sessionManager.setKnowledgeConfig(id, req.body);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  // ===== KNOWLEDGE FILES =====
+
+  async listKnowledgeFiles(req, res) {
+    try {
+      const { id } = req.params;
+      const files = sessionManager.listKnowledgeFiles(id);
+      res.json(files);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  async uploadKnowledgeFile(req, res) {
+    try {
+      const { id } = req.params;
+      const uploadDir = path.join(config.sessionsPath, id, 'files');
+      const files = await parseUpload(req, uploadDir, {
+        maxFileSize: 50 * 1024 * 1024,
+        allowedTypes: []
+      });
+      const results = [];
+      for (const file of files) {
+        const result = await sessionManager.uploadKnowledgeFile(id, file);
+        results.push(result);
+      }
+      res.json(results.length === 1 ? results[0] : results);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  async deleteKnowledgeFile(req, res) {
+    try {
+      const { id, fileId } = req.params;
+      const result = await sessionManager.deleteKnowledgeFile(id, fileId);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  async downloadKnowledgeFile(req, res) {
+    try {
+      const { id, fileId } = req.params;
+      const result = await sessionManager.getKnowledgeFile(id, fileId);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
 }
 
 module.exports = new MainController();

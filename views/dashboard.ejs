@@ -86,12 +86,10 @@
                     <thead>
                         <tr>
                             <th>Display Name</th>
+                            <th>Holder</th>
                             <th>Internal ID</th>
                             <th>Phone</th>
                             <th>Status</th>
-                            <th>Port</th>
-                            <th>Uptime</th>
-                            <th>Messages</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -101,6 +99,7 @@
                             <td>
                                 <span class="session-display-name"><%= s.name || s.id.substring(0, 8) %></span>
                             </td>
+                            <td><%= s.holder || '—' %></td>
                             <td>
                                 <code class="session-id"><%= s.id %></code>
                             </td>
@@ -110,9 +109,6 @@
                                     <%= s.state %>
                                 </span>
                             </td>
-                            <td><%= s.port || '—' %></td>
-                            <td><%= s.uptimeFormatted || '0s' %></td>
-                            <td><%= s.messageCount || 0 %></td>
                             <td class="actions">
                                 <a href="/session/<%= s.id %>" class="btn btn-sm btn-primary" title="Open Dashboard">📊</a>
                                 <button class="btn-icon" onclick="editSession('<%= s.id %>')" title="Edit">✏️</button>
@@ -136,35 +132,20 @@
             <button class="modal-close" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <form id="session-form">
-                <input type="hidden" id="session-id" name="id">
-                <div class="form-group">
-                    <label for="session-name">Display Name <span class="required">*</span></label>
-                    <input type="text" id="session-name" name="name" class="form-control" placeholder="e.g., Customer Service Jakarta" required>
-                    <small class="form-hint">Human-friendly name for this session</small>
+                    <form id="session-form">
+                        <input type="hidden" id="session-id" name="id">
+                        <div class="form-group">
+                            <label for="session-name">Display Name <span class="required">*</span></label>
+                            <input type="text" id="session-name" name="name" class="form-control" placeholder="e.g., Customer Service Jakarta" required>
+                            <small class="form-hint">Human-friendly name for this session</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="session-holder">Holder <span class="required">*</span></label>
+                            <input type="text" id="session-holder" name="holder" class="form-control" placeholder="e.g., Andi Pratama" required maxlength="100">
+                            <small class="form-hint">Real name of the assigned Customer Service</small>
+                        </div>
+                    </form>
                 </div>
-                <div class="form-group">
-                    <label for="session-description">Description</label>
-                    <textarea id="session-description" name="description" class="form-control" rows="3" placeholder="Optional description..."></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Auto Reconnect</label>
-                        <select id="session-autoreconnect" name="autoReconnect" class="form-control">
-                            <option value="true">Yes</option>
-                            <option value="false">No</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Auto Reply</label>
-                        <select id="session-autoreply" name="autoReply" class="form-control">
-                            <option value="true">Yes</option>
-                            <option value="false">No</option>
-                        </select>
-                    </div>
-                </div>
-            </form>
-        </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
             <button class="btn btn-primary" onclick="saveSession()">Save Session</button>
@@ -216,9 +197,7 @@ function openCreateModal() {
     document.getElementById('session-form').reset();
     document.getElementById('session-id').value = '';
     document.getElementById('session-name').value = '';
-    document.getElementById('session-description').value = '';
-    document.getElementById('session-autoreconnect').value = 'true';
-    document.getElementById('session-autoreply').value = 'true';
+    document.getElementById('session-holder').value = '';
     document.getElementById('session-modal').classList.add('active');
 }
 
@@ -232,13 +211,10 @@ function editSession(id) {
         .then(r => r.json())
         .then(data => {
             document.getElementById('session-name').value = data.name || data.displayName || '';
-            document.getElementById('session-description').value = data.description || '';
-            document.getElementById('session-autoreconnect').value = data.autoReconnect ? 'true' : 'false';
-            document.getElementById('session-autoreply').value = data.autoReply ? 'true' : 'false';
+            document.getElementById('session-holder').value = data.holder || '';
         })
         .catch(() => {
             // Fallback if API fails
-            document.getElementById('session-name').value = displayName || '';
         });
     
     document.getElementById('session-modal').classList.add('active');
@@ -263,19 +239,27 @@ function closeDeleteModal() {
 async function saveSession() {
     const id = document.getElementById('session-id').value;
     const name = document.getElementById('session-name').value.trim();
-    const description = document.getElementById('session-description').value.trim();
-    const autoReconnect = document.getElementById('session-autoreconnect').value === 'true';
-    const autoReply = document.getElementById('session-autoreply').value === 'true';
+    const holder = document.getElementById('session-holder').value.trim();
 
     if (!name) {
         await _dialogOpen('<p>Display Name is required</p><div class="dialog-actions"><button class="btn btn-primary" onclick="_dialogClose(true)">OK</button></div>');
         return;
     }
 
+    if (!holder) {
+        await _dialogOpen('<p>Holder is required</p><div class="dialog-actions"><button class="btn btn-primary" onclick="_dialogClose(true)">OK</button></div>');
+        return;
+    }
+
+    if (holder.length > 100) {
+        await _dialogOpen('<p>Holder must be 100 characters or less</p><div class="dialog-actions"><button class="btn btn-primary" onclick="_dialogClose(true)">OK</button></div>');
+        return;
+    }
+
     const isEdit = !!id;
     const url = isEdit ? '/api/session/' + id : '/api/session';
     const method = isEdit ? 'PUT' : 'POST';
-    const body = isEdit ? { name, description, autoReconnect, autoReply } : { name, description, autoReconnect, autoReply };
+    const body = { name, holder };
 
     try {
         const res = await fetch(url, {
@@ -364,12 +348,10 @@ async function refreshSessionList() {
             const statusClass = s.connected ? 'success' : (s.state === 'connecting' ? 'warning' : 'danger');
             return `<tr data-session-id="${s.id}">
                 <td><span class="session-display-name">${displayName}</span></td>
+                <td>${s.holder || '—'}</td>
                 <td><code class="session-id">${s.id}</code></td>
                 <td>${s.phoneNumber || '—'}</td>
                 <td><span class="badge badge-${statusClass}">${s.state}</span></td>
-                <td>${s.port || '—'}</td>
-                <td>${s.uptimeFormatted || '0s'}</td>
-                <td>${s.messageCount || 0}</td>
                 <td class="actions">
                     <a href="/session/${s.id}" class="btn btn-sm btn-primary">Dashboard</a>
                     <button class="btn btn-sm btn-outline" onclick="editSession('${s.id}', '${escName}')">Edit</button>

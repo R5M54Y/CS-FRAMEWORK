@@ -59,64 +59,165 @@
             </div>
         </div>
 
-        <!-- Conversation Inbox - Two Column Layout -->
-        <div class="conversation-container" id="conversation-container">
-            <!-- Left Column - Chat List -->
-            <div class="chat-list">
-                <div class="chat-list-header">
-                    <h3>💬 Conversations</h3>
-                </div>
-                <div class="chat-search">
-                    <input type="text" id="chat-search" placeholder="Search conversations..." autocomplete="off">
-                </div>
-                <div class="chat-list-container" id="chat-list-container">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">💬</div>
-                        <h3>Loading conversations...</h3>
+        <!-- Tab Navigation -->
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="chats" onclick="switchTab('chats')">💬 Chats</button>
+            <button class="tab-btn" data-tab="persona" onclick="switchTab('persona')">🎭 Persona</button>
+            <button class="tab-btn" data-tab="knowledge" onclick="switchTab('knowledge')">📚 Knowledge</button>
+        </div>
+
+        <!-- TAB: Chats -->
+        <div class="tab-panel active" id="tab-chats">
+            <div class="conversation-container" id="conversation-container">
+                <!-- Left Column - Chat List -->
+                <div class="chat-list">
+                    <div class="chat-list-header">
+                        <h3>💬 Conversations</h3>
+                    </div>
+                    <div class="chat-search">
+                        <input type="text" id="chat-search" placeholder="Search conversations..." autocomplete="off">
+                    </div>
+                    <div class="chat-list-container" id="chat-list-container">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">💬</div>
+                            <h3>Loading conversations...</h3>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Right Column - Conversation View -->
-            <div class="conversation-view">
-                <div class="conversation-header">
-                    <div class="participant-info">
-                        <div class="participant-avatar" id="participant-avatar">👤</div>
-                        <div>
-                            <div class="participant-name" id="participant-name">Select a conversation</div>
-                            <div class="participant-meta">
-                                <span class="badge badge-info" id="bot-status-badge">🤖 AUTO</span>
-                                <span class="chat-time" id="participant-time"></span>
+                <!-- Right Column - Conversation View -->
+                <div class="conversation-view">
+                    <div class="conversation-header">
+                        <div class="participant-info">
+                            <div class="participant-avatar" id="participant-avatar">👤</div>
+                            <div>
+                                <div class="participant-name" id="participant-name">Select a conversation</div>
+                                <div class="participant-meta">
+                                    <span class="badge badge-info" id="bot-status-badge">🤖 AUTO</span>
+                                    <span class="chat-time" id="participant-time"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bot-toggle-container">
+                            <div class="bot-toggle active" id="bot-toggle" onclick="toggleBotStatus()">
+                                <span class="bot-icon">🤖</span>
+                                <span class="bot-label" id="bot-label">BOT ACTIVE</span>
+                                <span class="bot-status-dot active" id="bot-status-dot"></span>
                             </div>
                         </div>
                     </div>
-                    <div class="bot-toggle-container">
-                        <div class="bot-toggle active" id="bot-toggle" onclick="toggleBotStatus()">
-                            <span class="bot-icon">🤖</span>
-                            <span class="bot-label" id="bot-label">BOT</span>
-                            <span class="bot-status-dot active" id="bot-status-dot"></span>
+                    <div class="messages-container" id="messages-container">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">💬</div>
+                            <h3>No Conversation Selected</h3>
+                            <p>Click on a conversation from the left to start messaging</p>
+                        </div>
+                    </div>
+                    <div class="reply-box">
+                        <div class="reply-box-container">
+                            <form id="reply-form" class="reply-input-container" onsubmit="sendMessage(event)">
+                                <textarea 
+                                    id="reply-textarea" 
+                                    class="reply-textarea" 
+                                    placeholder="Type a message..." 
+                                    rows="1"
+                                    disabled
+                                ></textarea>
+                                <button type="submit" class="reply-button" id="send-button" disabled>📨</button>
+                            </form>
                         </div>
                     </div>
                 </div>
-                <div class="messages-container" id="messages-container">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">💬</div>
-                        <h3>No Conversation Selected</h3>
-                        <p>Click on a conversation from the left to start messaging</p>
+            </div>
+        </div>
+
+        <!-- TAB: Persona -->
+        <div class="tab-panel" id="tab-persona">
+            <div class="persona-panel">
+                <div class="persona-header">
+                    <h3>🎭 Persona</h3>
+                    <p class="persona-subtitle">Define your AI's personality and behavior for this session</p>
+                </div>
+                <div class="persona-form">
+                    <div class="form-group">
+                        <label for="persona-prompt">AI Personality Prompt</label>
+                        <textarea 
+                            id="persona-prompt" 
+                            class="form-control persona-textarea" 
+                            rows="10" 
+                            placeholder="Enter AI personality prompt...&#10;&#10;Example: You are a friendly customer service agent for a tech company. You are helpful, patient, and professional. Always greet customers warmly and try to resolve their issues quickly."
+                        ></textarea>
+                    </div>
+                    <div class="persona-actions">
+                        <button class="btn btn-primary" id="save-persona-btn" onclick="savePersona()">
+                            💾 Save Persona
+                        </button>
+                        <span class="persona-status" id="persona-status"></span>
                     </div>
                 </div>
-                <div class="reply-box">
-                    <div class="reply-box-container">
-                        <form id="reply-form" class="reply-input-container" onsubmit="sendMessage(event)">
-                            <textarea 
-                                id="reply-textarea" 
-                                class="reply-textarea" 
-                                placeholder="Type a message..." 
-                                rows="1"
-                                disabled
-                            ></textarea>
-                            <button type="submit" class="reply-button" id="send-button" disabled>📨</button>
-                        </form>
+            </div>
+        </div>
+
+        <!-- TAB: Knowledge -->
+        <div class="tab-panel" id="tab-knowledge">
+            <div class="knowledge-panel">
+                <div class="knowledge-header">
+                    <h3>📚 Knowledge Base</h3>
+                    <p class="knowledge-subtitle">Configure knowledge sources and upload documents for AI context</p>
+                </div>
+                <div class="knowledge-form">
+                    <!-- Knowledge Prompt -->
+                    <div class="form-group">
+                        <label for="knowledge-prompt">Knowledge Prompt</label>
+                        <textarea 
+                            id="knowledge-prompt" 
+                            class="form-control knowledge-textarea" 
+                            rows="10" 
+                            placeholder="Additional instructions for the AI about your products, services, FAQs, etc...&#10;&#10;Example: Our company sells electronics. Our return policy is 30 days. Support hours are 9am-6pm WIB."
+                        ></textarea>
+                    </div>
+
+                    <!-- Marketplace URL -->
+                    <div class="form-group">
+                        <label for="marketplace-url">Marketplace URL</label>
+                        <input 
+                            type="text" 
+                            id="marketplace-url" 
+                            class="form-control" 
+                            placeholder="https://tokopedia.com/your-store"
+                        >
+                        <small class="form-help">Link to your marketplace store for product references</small>
+                    </div>
+
+                    <!-- Knowledge Files - Upload Area -->
+                    <div class="form-group">
+                        <label>Knowledge Files</label>
+                        <div class="knowledge-dropzone" id="knowledge-dropzone">
+                            <div class="dropzone-content">
+                                <span class="dropzone-icon">📁</span>
+                                <p>Drag & drop files here, or <span class="dropzone-browse">browse</span></p>
+                                <small>Supports PDF, TXT, CSV, MD, JSON + Images (PNG, JPG, GIF, WebP, SVG) + Videos (MP4, WebM, OGG) — max 50MB</small>
+                            </div>
+                            <input type="file" id="knowledge-file-input" multiple accept=".pdf,.txt,.csv,.md,.json,.png,.jpg,.jpeg,.gif,.webp,.svg,.mp4,.webm,.ogg,.mov,.avi,.wmv" style="display:none">
+                        </div>
+                    </div>
+
+                    <!-- Uploaded Files List -->
+                    <div class="form-group">
+                        <label>Uploaded Files</label>
+                        <div class="knowledge-files-list" id="knowledge-files-list">
+                            <div class="empty-files-state">
+                                <p>No files uploaded yet</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Save Button -->
+                    <div class="knowledge-actions">
+                        <button class="btn btn-primary" id="save-knowledge-btn" onclick="saveKnowledgeConfig()">
+                            💾 Save Knowledge
+                        </button>
+                        <span class="knowledge-status" id="knowledge-status"></span>
                     </div>
                 </div>
             </div>
@@ -156,6 +257,59 @@ function formatTime(timestamp) {
         hour: '2-digit',
         minute: '2-digit'
     });
+}
+
+function formatFileSize(bytes) {
+    if (!bytes) return '0 B';
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i];
+}
+
+// === TOAST NOTIFICATIONS ===
+function showToast(message, type) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = 'position:fixed;top:1.5rem;right:1.5rem;z-index:2000;display:flex;flex-direction:column;gap:0.5rem;';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    toast.style.cssText = `
+        padding: 0.75rem 1.25rem;
+        border-radius: var(--radius);
+        color: white;
+        font-size: 0.9rem;
+        font-weight: 500;
+        box-shadow: var(--shadow-lg);
+        animation: toastIn 0.3s ease;
+        background: ${type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : 'var(--info)'};
+    `;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// === TAB SWITCHING ===
+let currentTab = 'chats';
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.id === 'tab-' + tab);
+    });
+    // Load data on tab switch
+    if (tab === 'persona') loadPersona();
+    else if (tab === 'knowledge') { loadKnowledgeConfig(); loadKnowledgeFiles(); }
 }
 
 // === QR MODAL FUNCTIONS ===
@@ -225,7 +379,6 @@ async function dialogConfirm(msg) {
 
 // === SESSION ACTIONS ===
 async function sessionAction(action) {
-    // If no action provided, determine from current button state
     if (!action) {
         const btn = document.getElementById('connect-btn');
         if (btn.classList.contains('btn-warning')) action = 'disconnect';
@@ -236,7 +389,6 @@ async function sessionAction(action) {
         const data = await res.json();
         if (data.error) dialogAlert('Error: ' + data.error);
         else {
-            // Update UI immediately for connect/disconnect
             if (action === 'connect') {
                 updateConnectButton('connecting');
             } else if (action === 'disconnect') {
@@ -262,7 +414,7 @@ function updateConnectButton(state) {
         btn.classList.add('btn-info');
         btnText.textContent = '⏳ Connecting...';
         btn.disabled = true;
-    } else { // disconnected
+    } else {
         btn.classList.add('btn-success');
         btnText.textContent = '🔗 Connect';
         btn.disabled = false;
@@ -310,7 +462,6 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (initialState === 'connecting') updateConnectButton('connecting');
     else updateConnectButton('disconnected');
     
-    // Load QR if not connected
     if (!initialConnected && initialState !== 'connected') {
         loadQR();
     }
@@ -319,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Socket events
 socket.on('session:qr', (data) => { 
     if (data.sessionId === sessionId) {
-        loadQR(); // Will open modal with new QR
+        loadQR();
     }
 });
 socket.on('session:status', (data) => { 
@@ -337,7 +488,7 @@ socket.on('session:message', (data) => {
         if (selectedParticipant && (data.user === selectedParticipant || data.from === selectedParticipant)) {
             appendMessage(data);
         }
-        loadConversations(); // Refresh chat list
+        loadConversations();
     }
 });
 socket.on('session:sent', (data) => { 
@@ -410,26 +561,19 @@ function renderConversations(conversations) {
 async function selectConversation(participant) {
     selectedParticipant = participant;
     
-    // Update UI
     document.querySelectorAll('.chat-item').forEach(item => {
         item.classList.toggle('selected', item.dataset.participant === participant);
     });
     
-    // Load messages
     await loadMessages();
-    
-    // Load status
     await loadConversationStatus();
     
-    // Enable reply box
     document.getElementById('reply-textarea').disabled = false;
     document.getElementById('send-button').disabled = false;
     
-    // Update header
     document.getElementById('participant-name').textContent = participant;
     document.getElementById('participant-avatar').textContent = participant ? participant.charAt(0).toUpperCase() : '👤';
     
-    // Scroll to bottom
     const messagesContainer = document.getElementById('messages-container');
     if (messagesContainer) {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -467,24 +611,21 @@ function renderMessages(messages) {
         const isOutgoing = msg.isOutgoing || msg.to === selectedParticipant;
         const isFromMe = msg.user === 'human' || msg.fromMe;
         const bubbleClass = isFromMe ? 'human' : (msg.user === 'bot' ? 'bot' : 'customer');
-        const fromLabel = isFromMe ? 'You' : (msg.user || msg.from);
         
         return `
             <div class="message-wrapper ${isOutgoing ? 'right' : 'left'}">
                 <div class="message-bubble ${bubbleClass}">
-                    <div class="message-header">
-                        <span class="message-from">${escapeHtml(fromLabel)}</span>
-                        <span class="message-time">${formatTime(msg.timestamp)}</span>
-                    </div>
                     <div class="message-content">
                         ${escapeHtml(msg.content || '')}
+                    </div>
+                    <div class="message-footer">
+                        <span class="message-time">${formatTime(msg.timestamp)}</span>
                     </div>
                 </div>
             </div>
         `;
     }).join('');
     
-    // Scroll to bottom
     setTimeout(() => {
         container.scrollTop = container.scrollHeight;
     }, 100);
@@ -500,18 +641,16 @@ function appendMessage(msg) {
     const isOutgoing = msg.isOutgoing || msg.to === selectedParticipant;
     const isFromMe = msg.user === 'human' || msg.fromMe;
     const bubbleClass = isFromMe ? 'human' : (msg.user === 'bot' ? 'bot' : 'customer');
-    const fromLabel = isFromMe ? 'You' : (msg.user || msg.from);
     
     const div = document.createElement('div');
     div.className = `message-wrapper ${isOutgoing ? 'right' : 'left'}`;
     div.innerHTML = `
         <div class="message-bubble ${bubbleClass}">
-            <div class="message-header">
-                <span class="message-from">${escapeHtml(fromLabel)}</span>
-                <span class="message-time">${formatTime(msg.timestamp)}</span>
-            </div>
             <div class="message-content">
                 ${escapeHtml(msg.content || '')}
+            </div>
+            <div class="message-footer">
+                <span class="message-time">${formatTime(msg.timestamp)}</span>
             </div>
         </div>
     `;
@@ -545,7 +684,7 @@ async function updateBotStatusUI(status) {
         const botPausedBy = status.botPausedBy;
         
         botToggle.className = `bot-toggle ${isBotEnabled ? 'active' : 'inactive'}`;
-        botLabel.textContent = isBotEnabled ? 'BOT' : 'BOT (PAUSED)';
+        botLabel.textContent = isBotEnabled ? 'BOT ACTIVE' : 'BOT PAUSED';
         botStatusDot.className = `bot-status-dot ${isBotEnabled ? 'active' : 'inactive'}`;
         
         if (botPausedBy === 'human') {
@@ -576,7 +715,6 @@ async function toggleBotStatus() {
             return;
         }
         
-        // Update UI immediately
         await loadConversationStatus();
         showToast(`Bot ${action}ed successfully`, 'success');
     } catch (e) {
@@ -594,12 +732,10 @@ async function sendMessage(e) {
     if (!content || !selectedParticipant) return;
     
     try {
-        // Disable send button
         const sendButton = document.getElementById('send-button');
         sendButton.disabled = true;
         sendButton.innerHTML = '<div class="loading-spinner"></div>';
         
-        // Send message to backend
         const res = await fetch('/api/session/' + sessionId + '/conversations/reply', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -611,7 +747,6 @@ async function sendMessage(e) {
         
         const data = await res.json();
         
-        // Clear textarea
         textarea.value = '';
         textarea.style.height = '44px';
         
@@ -624,11 +759,263 @@ async function sendMessage(e) {
         console.error('Failed to send message:', err);
         showToast('Failed to send message', 'error');
     } finally {
-        // Re-enable send button
         const sendButton = document.getElementById('send-button');
         sendButton.disabled = false;
         sendButton.innerHTML = '📨';
     }
+}
+
+// === PERSONA TAB ===
+async function loadPersona() {
+    try {
+        const res = await fetch('/api/session/' + sessionId + '/persona');
+        const data = await res.json();
+        document.getElementById('persona-prompt').value = data.prompt || '';
+    } catch (e) {
+        console.error('Failed to load persona:', e);
+    }
+}
+
+async function savePersona() {
+    const btn = document.getElementById('save-persona-btn');
+    const statusEl = document.getElementById('persona-status');
+    const prompt = document.getElementById('persona-prompt').value;
+    
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Saving...';
+    statusEl.textContent = '';
+    
+    try {
+        const res = await fetch('/api/session/' + sessionId + '/persona', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt })
+        });
+        const data = await res.json();
+        
+        if (data.error) {
+            statusEl.textContent = '❌ ' + data.error;
+            statusEl.className = 'persona-status error';
+        } else {
+            statusEl.textContent = '✅ Persona saved successfully';
+            statusEl.className = 'persona-status success';
+            showToast('Persona saved', 'success');
+        }
+    } catch (e) {
+        statusEl.textContent = '❌ Failed to save persona';
+        statusEl.className = 'persona-status error';
+        console.error('Failed to save persona:', e);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '💾 Save Persona';
+    }
+}
+
+socket.on('persona:updated', (data) => {
+    if (data.sessionId === sessionId && currentTab === 'persona') {
+        loadPersona();
+    }
+});
+
+// === KNOWLEDGE TAB ===
+async function loadKnowledgeConfig() {
+    try {
+        const res = await fetch('/api/session/' + sessionId + '/knowledge-config');
+        const data = await res.json();
+        document.getElementById('knowledge-prompt').value = data.knowledge || '';
+        document.getElementById('marketplace-url').value = data.marketplaceUrl || '';
+    } catch (e) {
+        console.error('Failed to load knowledge config:', e);
+    }
+}
+
+async function loadKnowledgeFiles() {
+    try {
+        const res = await fetch('/api/session/' + sessionId + '/knowledge-files');
+        const files = await res.json();
+        renderKnowledgeFiles(files);
+    } catch (e) {
+        console.error('Failed to load knowledge files:', e);
+    }
+}
+
+function renderKnowledgeFiles(files) {
+    const container = document.getElementById('knowledge-files-list');
+    if (!container) return;
+    
+    if (!files || files.length === 0) {
+        container.innerHTML = '<div class="empty-files-state"><p>No files uploaded yet</p></div>';
+        return;
+    }
+    
+    container.innerHTML = files.map(file => {
+        const icon = getFileIcon(file.originalname || file.name);
+        const size = formatFileSize(file.size);
+        const date = file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+        
+        return `
+            <div class="knowledge-file-item">
+                <div class="file-info">
+                    <span class="file-icon">${icon}</span>
+                    <div class="file-details">
+                        <span class="file-name">${escapeHtml(file.originalname || file.name)}</span>
+                        <span class="file-meta">${size} · ${date}</span>
+                    </div>
+                </div>
+                <div class="file-actions">
+                    <a href="/api/session/${sessionId}/knowledge-files/${file.id || file._id}/download" class="btn btn-sm btn-outline" title="Download">⬇️</a>
+                    <button class="btn btn-sm btn-danger" onclick="deleteKnowledgeFile('${file.id || file._id}')" title="Delete">🗑️</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getFileIcon(filename) {
+    if (!filename) return '📄';
+    const ext = filename.split('.').pop().toLowerCase();
+    const icons = { pdf: '📕', txt: '📝', csv: '📊', md: '📑', json: '📋' };
+    return icons[ext] || '📄';
+}
+
+async function deleteKnowledgeFile(fileId) {
+    const confirmed = await dialogConfirm('Delete this file?');
+    if (!confirmed) return;
+    
+    try {
+        const res = await fetch('/api/session/' + sessionId + '/knowledge-files/' + fileId, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.error) {
+            showToast('Error: ' + data.error, 'error');
+        } else {
+            showToast('File deleted', 'success');
+            loadKnowledgeFiles();
+        }
+    } catch (e) {
+        console.error('Failed to delete file:', e);
+        showToast('Failed to delete file', 'error');
+    }
+}
+
+async function saveKnowledgeConfig() {
+    const btn = document.getElementById('save-knowledge-btn');
+    const statusEl = document.getElementById('knowledge-status');
+    const knowledge = document.getElementById('knowledge-prompt').value;
+    const marketplaceUrl = document.getElementById('marketplace-url').value;
+    
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Saving...';
+    statusEl.textContent = '';
+    
+    try {
+        const res = await fetch('/api/session/' + sessionId + '/knowledge-config', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ knowledge, marketplaceUrl })
+        });
+        const data = await res.json();
+        
+        if (data.error) {
+            statusEl.textContent = '❌ ' + data.error;
+            statusEl.className = 'knowledge-status error';
+        } else {
+            statusEl.textContent = '✅ Knowledge saved successfully';
+            statusEl.className = 'knowledge-status success';
+            showToast('Knowledge config saved', 'success');
+        }
+    } catch (e) {
+        statusEl.textContent = '❌ Failed to save knowledge';
+        statusEl.className = 'knowledge-status error';
+        console.error('Failed to save knowledge config:', e);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '💾 Save Knowledge';
+    }
+}
+
+socket.on('knowledge:updated', (data) => {
+    if (data.sessionId === sessionId && currentTab === 'knowledge') {
+        loadKnowledgeConfig();
+        loadKnowledgeFiles();
+    }
+});
+// === DRAG & DROP FILE UPLOAD ===
+(function initDropzone() {
+    const dropzone = document.getElementById('knowledge-dropzone');
+    const fileInput = document.getElementById('knowledge-file-input');
+    if (!dropzone || !fileInput) return;
+    
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.querySelector('.dropzone-browse')?.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+    
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => { dropzone.classList.remove('dragover'); });
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            // Check file types
+            const invalidFiles = Array.from(files).filter(file => {
+                const ext = file.name.toLowerCase().match(/\.(.+)$/);
+                const allowedTypes = [
+                    '.pdf', '.txt', '.csv', '.md', '.json',  // Documents
+                    '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg',  // Images
+                    '.mp4', '.webm', '.ogg', '.mov', '.avi', '.wmv'  // Videos
+                ];
+                return ext && !allowedTypes.includes(ext[1].toLowerCase());
+            });
+            if (invalidFiles.length > 0) {
+                showToast('Unsupported file types: ' + invalidFiles.map(f => f.name).join(', '), 'error');
+                return;
+            }
+            
+            // Check total size (assuming 50MB limit for media-heavy uploads)
+            const totalSize = Array.from(files).reduce((sum, f) => sum + f.size, 0);
+            if (totalSize > 50 * 1024 * 1024) {
+                showToast('Total file size exceeds 50MB limit', 'error');
+                return;
+            }
+            
+            uploadFiles(files);
+        }
+    });
+    
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            uploadFiles(fileInput.files);
+            fileInput.value = '';
+        }
+    });
+})();
+async function uploadFiles(fileList) {
+    for (const file of fileList) {
+        if (file.size > 10 * 1024 * 1024) {
+            showToast(`${file.name} exceeds 10MB limit`, 'error');
+            continue;
+        }
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            const res = await fetch('/api/session/' + sessionId + '/knowledge-files', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            
+            if (data.error) {
+                showToast('Upload failed: ' + data.error, 'error');
+            } else {
+                showToast(`${file.name} uploaded`, 'success');
+            }
+        } catch (e) {
+            console.error('Upload failed:', e);
+            showToast(`Failed to upload ${file.name}`, 'error');
+        }
+    }
+    loadKnowledgeFiles();
 }
 
 // Search filter

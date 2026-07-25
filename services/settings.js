@@ -9,14 +9,14 @@ class SettingsManager {
     this.settings = {};
     this.dataPath = path.join(config.dataPath, 'settings.json');
     this._loadSettings();
+    this.applyToConfig();
   }
-  
+
   _loadSettings() {
     try {
       if (fs.existsSync(this.dataPath)) {
         this.settings = fs.readJsonSync(this.dataPath);
       } else {
-        // Initialize with config defaults
         this.settings = {
           server: {
             port: config.port,
@@ -45,7 +45,7 @@ class SettingsManager {
       this.settings = {};
     }
   }
-  
+
   _saveSettings() {
     try {
       fs.writeJsonSync(this.dataPath, this.settings, { spaces: 2 });
@@ -53,21 +53,30 @@ class SettingsManager {
       console.error('Failed to save settings:', err.message);
     }
   }
-  
+
   get() {
     const settings = { ...this.settings };
-    
-    // Add AI info for API responses
+
+    settings.server = {
+      port: this.settings.server?.port ?? config.port,
+      host: this.settings.server?.host ?? config.host,
+      defaultTypingDelay: this.settings.server?.defaultTypingDelay ?? config.defaultTypingDelay,
+      defaultReadDelay: this.settings.server?.defaultReadDelay ?? config.defaultReadDelay,
+      autoReply: this.settings.server?.autoReply !== undefined ? this.settings.server.autoReply : config.autoReply,
+      enableQrTerminal: this.settings.server?.enableQrTerminal !== undefined ? this.settings.server.enableQrTerminal : config.enableQrTerminal,
+      enableRealtime: this.settings.server?.enableRealtime !== undefined ? this.settings.server.enableRealtime : config.enableRealtime,
+    };
+
     settings.ai = {
       endpoint: settings.ai?.endpoint || config.aiEndpoint,
+      apiKey: settings.ai?.apiKey || config.aiApiKey,
       model: settings.ai?.model || config.aiModel,
       hasApiKey: !!(settings.ai?.apiKey || config.aiApiKey),
       queueConcurrency: config.aiQueueConcurrency,
       requestTimeout: config.aiRequestTimeout,
       maxRetries: config.aiQueueMaxRetries
     };
-    
-    // Add original config for backward compatibility
+
     settings._config = {
       port: config.port,
       host: config.host,
@@ -80,83 +89,77 @@ class SettingsManager {
       enableKnowledge: config.enableKnowledge,
       enablePersona: config.enablePersona,
     };
-    
+
     return settings;
   }
-  
+
   set(newSettings) {
-    // Merge with existing settings
     if (this.settings.server) {
       this.settings.server = { ...this.settings.server, ...newSettings.server };
     } else {
       this.settings.server = newSettings.server || {};
     }
-    
+
     if (this.settings.ai) {
       this.settings.ai = { ...this.settings.ai, ...newSettings.ai };
     } else {
       this.settings.ai = newSettings.ai || {};
     }
-    
+
     if (this.settings.features) {
       this.settings.features = { ...this.settings.features, ...newSettings.features };
     } else {
       this.settings.features = newSettings.features || {};
     }
-    
+
     this._saveSettings();
     return { success: true, settings: this.settings };
   }
-  
-  // Apply settings to config (for runtime)
+
   applyToConfig() {
     if (this.settings.server) {
+      const s = this.settings.server;
       Object.assign(config, {
-        port: this.settings.server.port || config.port,
-        host: this.settings.server.host || config.host,
-        defaultTypingDelay: this.settings.server.defaultTypingDelay || config.defaultTypingDelay,
-        defaultReadDelay: this.settings.server.defaultReadDelay || config.defaultReadDelay,
-        autoReply: this.settings.server.autoReply !== undefined ? this.settings.server.autoReply : config.autoReply,
-        enableQrTerminal: this.settings.server.enableQrTerminal !== undefined ? this.settings.server.enableQrTerminal : config.enableQrTerminal,
-        enableRealtime: this.settings.server.enableRealtime !== undefined ? this.settings.server.enableRealtime : config.enableRealtime,
+        port: s.port ?? config.port,
+        host: s.host ?? config.host,
+        defaultTypingDelay: s.defaultTypingDelay ?? config.defaultTypingDelay,
+        defaultReadDelay: s.defaultReadDelay ?? config.defaultReadDelay,
+        autoReply: s.autoReply !== undefined ? s.autoReply : config.autoReply,
+        enableQrTerminal: s.enableQrTerminal !== undefined ? s.enableQrTerminal : config.enableQrTerminal,
+        enableRealtime: s.enableRealtime !== undefined ? s.enableRealtime : config.enableRealtime,
       });
     }
-    
+
     if (this.settings.ai) {
-      // Update environment variables if settings changed
-      if (this.settings.ai.endpoint !== config.aiEndpoint) {
-        process.env.AI_ENDPOINT = this.settings.ai.endpoint;
-        config.aiEndpoint = this.settings.ai.endpoint;
+      const ai = this.settings.ai;
+      if (ai.endpoint) {
+        config.aiEndpoint = ai.endpoint;
       }
-      
-      if (this.settings.ai.apiKey !== config.aiApiKey) {
-        process.env.AI_API_KEY = this.settings.ai.apiKey;
-        config.aiApiKey = this.settings.ai.apiKey;
+      if (ai.apiKey !== undefined && ai.apiKey !== '') {
+        config.aiApiKey = ai.apiKey;
       }
-      
-      if (this.settings.ai.model !== config.aiModel) {
-        process.env.AI_MODEL = this.settings.ai.model;
-        config.aiModel = this.settings.ai.model;
+      if (ai.model) {
+        config.aiModel = ai.model;
       }
     }
-    
+
     if (this.settings.features) {
+      const f = this.settings.features;
       Object.assign(config, {
-        enableProducts: this.settings.features.enableProducts !== undefined ? this.settings.features.enableProducts : config.enableProducts,
-        enableKnowledge: this.settings.features.enableKnowledge !== undefined ? this.settings.features.enableKnowledge : config.enableKnowledge,
-        enablePersona: this.settings.features.enablePersona !== undefined ? this.settings.features.enablePersona : config.enablePersona,
+        enableProducts: f.enableProducts !== undefined ? f.enableProducts : config.enableProducts,
+        enableKnowledge: f.enableKnowledge !== undefined ? f.enableKnowledge : config.enableKnowledge,
+        enablePersona: f.enablePersona !== undefined ? f.enablePersona : config.enablePersona,
       });
     }
   }
-  
+
   resetToDefaults() {
     this.settings = {};
     this._loadSettings();
     return { success: true, settings: this.settings };
   }
-  
+
   getConfig() {
-    // Return current config values for frontend
     return {
       port: config.port,
       host: config.host,
