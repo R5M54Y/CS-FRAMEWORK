@@ -1,0 +1,21 @@
+{
+  "server": {
+    "port": 3000,
+    "host": "0.0.0.0",
+    "defaultTypingDelay": 1000,
+    "defaultReadDelay": 500,
+    "autoReply": true,
+    "enableQrTerminal": true,
+    "enableRealtime": true
+  },
+  "ai": {
+    "endpoint": "http://localhost:20128/v1",
+    "apiKey": "9router",
+    "model": "oc/deepseek-v4-flash-free"
+  },
+  "features": {
+    "enableProducts": true,
+    "enableKnowledge": true,
+    "enablePersona": true
+  }
+}

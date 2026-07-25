@@ -22,12 +22,24 @@ router.post('/session/:id/disconnect', controller.disconnectSession);
 router.post('/session/:id/reconnect', controller.reconnectSession);
 router.post('/session/:id/restart', controller.restartSession);
 router.get('/session/:id/qrcode', controller.getQRCode);
+router.post('/session/:id/qrcode/regenerate', controller.regenerateQR);
 
 // Messages
 router.post('/session/:id/send', controller.sendMessage);
 router.get('/session/:id/messages', controller.getMessages);
 router.get('/session/:id/messages/date', controller.getMessagesByDate);
 router.get('/session/:id/chats', controller.getChats);
+
+// Conversation Inbox
+router.get('/session/:id/conversations', controller.getConversations);
+router.get('/session/:id/conversations/:jid/messages', controller.getConversationMessages);
+router.get('/session/:id/conversations/status', controller.getConversationStatus);
+router.post('/session/:id/conversations/reply', controller.sendHumanReply);
+router.get('/session/:id/conversations/:jid/avatar', controller.getAvatar);
+
+// Bot Control
+router.post('/session/:id/bot/pause', controller.pauseBot);
+router.post('/session/:id/bot/resume', controller.resumeBot);
 
 // Profile
 router.get('/session/:id/profile', controller.getProfile);

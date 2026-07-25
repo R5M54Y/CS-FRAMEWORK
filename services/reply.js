@@ -38,6 +38,12 @@ class ReplyService {
     const session = this.sessionManager.getSession(sessionId);
     if (!session || !session.connected) return;
 
+    // Check if bot is paused by human takeover
+    if (!session.isBotEnabled()) {
+      this.log.info(`Bot paused by human takeover for session ${sessionId}, skipping AI request`);
+      return;
+    }
+
     const from = sender || message.from;
 
     const profile = this.sessionManager.getProfile(sessionId);

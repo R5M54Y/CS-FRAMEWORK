@@ -40,8 +40,12 @@ class SessionManager extends EventEmitter {
 
     try {
       const index = fs.readJsonSync(indexPath);
-      for (const s of index.sessions) {
-        this._createSessionInstance(s);
+      const sessions = Array.isArray(index) ? index : index.sessions;
+      if (!Array.isArray(sessions)) {
+        throw new Error('Invalid sessions index: expected { sessions: [] }');
+      }
+      for (const s of sessions) {
+        if (s && s.id) this._createSessionInstance(s);
       }
     } catch (e) {
       this.log.error(`Failed to load sessions: ${e.message}`);
@@ -101,7 +105,9 @@ class SessionManager extends EventEmitter {
         personaId: s.options?.personaId
       };
     });
-    fs.writeJsonSync(indexPath, { sessions }, { spaces: 2 });
+    const tempPath = `${indexPath}.tmp`;
+    fs.writeJsonSync(tempPath, { sessions }, { spaces: 2 });
+    fs.moveSync(tempPath, indexPath, { overwrite: true });
   }
 
   _attachSessionEvents(session) {
@@ -176,13 +182,125 @@ class SessionManager extends EventEmitter {
     return session.getStatus();
   }
 
-  getSession(id) {
-    return this.sessions.get(id);
-  }
+    // Get conversations (for conversation list in dashboard)
+    getConversations(sessionId) {
+      const session = this.sessions.get(sessionId);
+      if (!session) return [];
+      
+      // Build conversation list from messages
+      const conversations = [];
+      const participantMap = new Map();
+      
+      // Create a simple conversation mapping
+      // For WhatsApp, we can look at the last message from each participant
+      for (const msg of session.messages) {
+        if (msg.isOutgoing) continue; // Skip outgoing messages for conversation tracking
+        
+        const key = msg.user || msg.from;
+        if (!participantMap.has(key)) {
+          participantMap.set(key, {
+            name: key,
+            avatar: null,
+            lastMessage: msg.content,
+            timestamp: msg.timestamp,
+            unread: 0,
+            botPausedBy: session.botPausedBy
+          });
+        }
+      }
+      
+      // Convert to array
+      const result = Array.from(participantMap.values());
+      result.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // Newest first
+      
+      return result;
+    }
 
-  getAllSessions() {
-    return Array.from(this.sessions.values()).map(s => s.getStatus());
-  }
+    getConversationMessages(sessionId, participant) {
+      const session = this.sessions.get(sessionId);
+      if (!session) return [];
+      
+      // Filter messages between current user (operator) and participant
+      // This is a simple implementation - in production you'd need more sophisticated conversation tracking
+      return session.messages.filter(msg => 
+        (msg.user === participant || msg.from === participant) && 
+        !msg.isOutgoing
+      );
+    }
+
+    async sendHumanReply(sessionId, to, content) {
+      const session = this.sessions.get(sessionId);
+      if (!session || !session.connected) {
+        throw new Error('Session not found or not connected');
+      }
+
+      // Send through HumanizerService (for typing, delays, presence)
+      await this.replyService.humanizer.send({
+        sessionId,
+        to,
+        text: content,
+        options: {}
+      });
+
+      // Manually pause the bot when human sends a reply
+      await session.pauseBot('human');
+
+      this.log.info(`Human reply sent via Humanizer to ${to} for session ${sessionId}`);
+      return { success: true };
+    }
+
+    getConversationStatus(sessionId, participant) {
+      const session = this.sessions.get(sessionId);
+      if (!session) return null;
+      
+      const botPausedBy = session.botPausedBy;
+      let status = 'AUTO';
+      
+      if (botPausedBy === 'human') {
+        status = 'HUMAN';
+      } else if (botPausedBy) {
+        status = 'PAUSED';
+      }
+      
+      return {
+        sessionId,
+        participant,
+        botStatus: status,
+        botPausedBy,
+        botEnabled: session.isBotEnabled(),
+        lastMessage: session.messages.length > 0 ? session.messages[session.messages.length - 1].content : null
+      };
+    }
+
+    // ===== PUBLIC API =====
+
+    getSession(id) {
+      return this.sessions.get(id);
+    }
+
+    getAllSessions() {
+      return Array.from(this.sessions.values()).map(s => s.getStatus());
+    }
+
+    // ===== BOT CONTROL =====
+
+    pauseBot(sessionId) {
+      const session = this.sessions.get(sessionId);
+      if (!session) throw new Error('Session not found');
+      const result = session.pauseBot('human');
+      this._saveSessionIndex();
+      this.emit('bot:state', { sessionId, botEnabled: false });
+      return result;
+    }
+
+    resumeBot(sessionId) {
+      const session = this.sessions.get(sessionId);
+      if (!session) throw new Error('Session not found');
+      const result = session.resumeBot();
+      this._saveSessionIndex();
+      this.emit('bot:state', { sessionId, botEnabled: true });
+      return result;
+    }
 
   async connectSession(id) {
     const session = this.sessions.get(id);

@@ -43,9 +43,9 @@ const config = {
   logMaxFiles: parseInt(process.env.LOG_MAX_FILES, 10) || 14,
 
   // AI Gateway
-  aiEndpoint: process.env.AI_ENDPOINT || 'http://localhost:20128/v1',
-  aiApiKey: process.env.AI_API_KEY || '',
-  aiModel: process.env.AI_MODEL || 'gpt-4.1',
+    aiEndpoint: process.env.AI_ENDPOINT || 'http://localhost:20128/v1',
+    aiApiKey: process.env.AI_API_KEY || '9router',
+    aiModel: process.env.AI_MODEL || 'oc/deepseek-v4-flash-free',
 
   // AI Queue
   aiQueueConcurrency: parseInt(process.env.AI_QUEUE_CONCURRENCY, 10) || 3,

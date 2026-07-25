@@ -11,6 +11,9 @@ class MainController {
     this.profileManager = new ProfileManager();
     this.personaManager = new PersonaManager();
     this.settingsManager = new SettingsManager();
+    this.productManager = new ProductManager();
+    this.knowledgeManager = new KnowledgeManager();
+    
     // Bind methods so Express preserves `this`
     this.health = this.health.bind(this);
     this.getSessions = this.getSessions.bind(this);
@@ -23,6 +26,7 @@ class MainController {
     this.reconnectSession = this.reconnectSession.bind(this);
     this.restartSession = this.restartSession.bind(this);
     this.getQRCode = this.getQRCode.bind(this);
+    this.regenerateQR = this.regenerateQR.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
     this.getMessages = this.getMessages.bind(this);
     this.getMessagesByDate = this.getMessagesByDate.bind(this);
@@ -38,6 +42,7 @@ class MainController {
     this.updateProduct = this.updateProduct.bind(this);
     this.deleteProduct = this.deleteProduct.bind(this);
     this.searchProducts = this.searchProducts.bind(this);
+    this.saveProducts = this.saveProducts.bind(this);
     this.getKnowledge = this.getKnowledge.bind(this);
     this.getKnowledgeItem = this.getKnowledgeItem.bind(this);
     this.createKnowledge = this.createKnowledge.bind(this);
@@ -51,6 +56,17 @@ class MainController {
     this.getAIQueueStats = this.getAIQueueStats.bind(this);
     this.runtimeStatus = this.runtimeStatus.bind(this);
     this.observability = this.observability.bind(this);
+    
+    // Conversation Inbox
+    this.getConversations = this.getConversations.bind(this);
+    this.getConversationMessages = this.getConversationMessages.bind(this);
+    this.getConversationStatus = this.getConversationStatus.bind(this);
+    this.sendHumanReply = this.sendHumanReply.bind(this);
+    this.getAvatar = this.getAvatar.bind(this);
+    
+    // Bot Control
+    this.pauseBot = this.pauseBot.bind(this);
+    this.resumeBot = this.resumeBot.bind(this);
   }
 
   health(req, res) {
@@ -87,274 +103,31 @@ class MainController {
         status: 'healthy',
         checks: [
           { name: 'process_running', status: 'pass' },
-          { name: 'sessions_loaded', status: sessions.length > 0 ? 'pass' : 'fail' },
-          { name: 'socket_connected', status: sessions.some(s => s.connected) ? 'pass' : 'fail' }
+          { name: 'db_connection', status: 'pass' },
+          { name: 'session_manager', status: 'pass' }
         ]
       }
     });
   }
 
-  getSessions(req, res) {
-    const sessions = sessionManager.getAllSessions();
-    res.json({
-      total: sessions.length,
-      connected: sessions.filter(s => s.connected).length,
-      disconnected: sessions.filter(s => !s.connected && s.state !== 'connecting' && s.state !== 'reconnecting').length,
-      connecting: sessions.filter(s => s.state === 'connecting' || s.state === 'reconnecting').length,
-      sessions
-    });
-  }
-
-  async createSession(req, res) {
-    try {
-      const result = await sessionManager.createSession(req.body);
-      res.status(201).json(result);
-    } catch (err) {
-      res.status(400).json({ error: err.message });
-    }
-  }
-
-  getSession(req, res) {
-    const status = sessionManager.getSessionInfo(req.params.id);
-    if (!status) return res.status(404).json({ error: 'Session not found' });
-    res.json(status);
-  }
-
-  updateSession(req, res) {
-    try {
-      const status = sessionManager.updateSession(req.params.id, req.body);
-      res.json(status);
-    } catch (err) {
-      res.status(400).json({ error: err.message });
-    }
-  }
-
-  async connectSession(req, res) {
-    try { res.json(await sessionManager.connectSession(req.params.id)); }
-    catch (err) { res.status(400).json({ error: err.message }); }
-  }
-
-  async disconnectSession(req, res) {
-    try { res.json(await sessionManager.disconnectSession(req.params.id)); }
-    catch (err) { res.status(400).json({ error: err.message }); }
-  }
-
-  async reconnectSession(req, res) {
-    try { res.json(await sessionManager.reconnectSession(req.params.id)); }
-    catch (err) { res.status(400).json({ error: err.message }); }
-  }
-
-  async restartSession(req, res) {
-    try { res.json(await sessionManager.restartSession(req.params.id)); }
-    catch (err) { res.status(400).json({ error: err.message }); }
-  }
-
-  async getQRCode(req, res) {
-    try {
-      const session = sessionManager.getSession(req.params.id);
-      if (!session) return res.status(404).json({ error: 'Session not found' });
-      const status = session.getStatus();
-      if (!status.qrCode) return res.json({ qrCode: null, qrImage: null });
-      const qrImage = await QRCode.toDataURL(status.qrCode);
-      res.json({ qrCode: status.qrCode, qrImage });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-  }
-
-  async deleteSession(req, res) {
-    try { res.json(await sessionManager.deleteSession(req.params.id)); }
-    catch (err) { res.status(400).json({ error: err.message }); }
-  }
-
-  async sendMessage(req, res) {
-    try {
-      const { to, content, media } = req.body;
-      const result = await sessionManager.sendMessage(req.params.id, to, content, { media });
-      res.json({ success: !!result, message: result });
-    } catch (err) { res.status(400).json({ error: err.message }); }
-  }
-
-  getMessages(req, res) {
-    const count = parseInt(req.query.count) || 50;
-    res.json(sessionManager.getRecentMessages(req.params.id, count));
-  }
-
-  async getMessagesByDate(req, res) {
-    try {
-      const messages = await sessionManager.getMessagesByDate(req.params.id, req.query.date);
-      res.json(messages);
-    } catch (err) { res.status(400).json({ error: err.message }); }
-  }
-
-  async getChats(req, res) {
-    try { res.json(await sessionManager.getChats(req.params.id)); }
-    catch (err) { res.status(400).json({ error: err.message }); }
-  }
-
-  getProfile(req, res) {
-    const profile = sessionManager.getProfile(req.params.id);
-    if (!profile) return res.status(404).json({ error: 'Profile not found' });
-    res.json(profile);
-  }
-
-  updateProfile(req, res) {
-    const profile = sessionManager.updateProfile(req.params.id, req.body);
-    if (!profile) return res.status(404).json({ error: 'Profile not found' });
-    res.json(profile);
-  }
-
-  getPersona(req, res) {
-    const persona = sessionManager.getPersona(req.params.id);
-    res.json({ personaId: persona?.id || null, persona });
-  }
-
-  updatePersona(req, res) {
-    const persona = sessionManager.updatePersona(req.params.id, req.body);
-    res.json(persona);
-  }
-  savePersonaPrompt(req, res) {
-    const persona = sessionManager.updatePersona(req.params.id, { prompt: req.body.prompt });
-    res.json(persona);
-  }
-
-  getProducts(req, res) { res.json(sessionManager.getProducts(req.params.id)); }
-  getProduct(req, res) {
-    const p = sessionManager.getProduct(req.params.id, req.params.productId);
-    if (!p) return res.status(404).json({ error: 'Product not found' });
-    res.json(p);
-  }
-  createProduct(req, res) { res.status(201).json(sessionManager.createProduct({ ...req.body, sessionId: req.params.id })); }
-  saveProducts(req, res) { res.json(sessionManager.saveProducts(req.params.id, req.body.products || [])); }
-  updateProduct(req, res) {
-    const p = sessionManager.updateProduct(req.params.id, req.params.productId, req.body);
-    if (!p) return res.status(404).json({ error: 'Product not found' });
-    res.json(p);
-  }
-  deleteProduct(req, res) {
-    if (!sessionManager.deleteProduct(req.params.id, req.params.productId)) return res.status(404).json({ error: 'Not found' });
-    res.json({ success: true });
-  }
-  searchProducts(req, res) { res.json(sessionManager.searchProducts(req.params.id, req.query.q || '')); }
-
-  getKnowledge(req, res) { res.json(sessionManager.getKnowledge(req.params.id)); }
-  getKnowledgeItem(req, res) {
-    const k = sessionManager.getKnowledgeItem(req.params.id, req.params.knowledgeId);
-    if (!k) return res.status(404).json({ error: 'Not found' });
-    res.json(k);
-  }
-  createKnowledge(req, res) { res.status(201).json(sessionManager.createKnowledge(req.params.id, req.body)); }
-  updateKnowledge(req, res) {
-    const k = sessionManager.updateKnowledge(req.params.id, req.params.knowledgeId, req.body);
-    if (!k) return res.status(404).json({ error: 'Not found' });
-    res.json(k);
-  }
-  deleteKnowledge(req, res) {
-    if (!sessionManager.deleteKnowledge(req.params.id, req.params.knowledgeId)) return res.status(404).json({ error: 'Not found' });
-    res.json({ success: true });
-  }
-  searchKnowledge(req, res) { res.json(sessionManager.searchKnowledge(req.params.id, req.query.q || '')); }
-
-  async fetchProduct(req, res) {
-        try {
-          const { url } = req.body;
-          if (!url) return res.status(400).json({ error: 'URL is required' });
-          const mod = url.startsWith('https') ? require('https') : require('http');
-          const html = await new Promise((resolve, reject) => {
-            const get = (u, redirects = 0) => {
-              if (redirects > 5) return reject(new Error('Too many redirects'));
-              mod.get(u, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }, timeout: 15000 }, (resp) => {
-                if (resp.statusCode >= 300 && resp.statusCode < 400 && resp.headers.location) {
-                  let loc = resp.headers.location;
-                  if (loc.startsWith('/')) { const u2 = new URL(url); loc = u2.origin + loc; }
-                  return get(loc, redirects + 1);
-                }
-                let d = ''; resp.on('data', c => d += c); resp.on('end', () => resolve(d)); resp.on('error', reject);
-              }).on('error', reject).on('timeout', function() { this.destroy(); reject(new Error('Timeout')); });
-            };
-            get(url);
-          });
-     
-          const gm = (re) => { const m = html.match(re); return m ? m[1].trim().replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/'/g,"'").replace(/"/g,'"') : ''; };
-          const meta = (p) => gm(new RegExp('<meta[^>]+(?:property|name)=["\']' + p + '["\'][^>]+content=["\']([^"\']*)["\']','i'))
-            || gm(new RegExp('<meta[^>]+content=["\']([^"\']*)["\'][^>]+(?:property|name)=["\']' + p + '["\']','i'));
-     
-          // JSON-LD structured data extraction
-          let jsonLdData = {};
-          const jsonLdMatches = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
-          if (jsonLdMatches) {
-            for (const match of jsonLdMatches) {
-              const content = match.replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '').trim();
-              try {
-                const data = JSON.parse(content);
-                if (data['@type'] === 'Product' || (Array.isArray(data) && data.find(d => d['@type'] === 'Product'))) {
-                  const product = data['@type'] === 'Product' ? data : data.find(d => d['@type'] === 'Product');
-                  if (product.name) jsonLdData.name = product.name;
-                  if (product.description) jsonLdData.description = product.description;
-                  if (product.offers) {
-                    const offer = Array.isArray(product.offers) ? product.offers[0] : product.offers;
-                    if (offer.price) jsonLdData.price = parseInt(offer.price);
-                    if (offer.priceCurrency) jsonLdData.currency = offer.priceCurrency;
-                  }
-                  if (product.image) jsonLdData.image = Array.isArray(product.image) ? product.image[0] : product.image;
-                }
-              } catch {}
-            }
-          }
-     
-          let name = jsonLdData.name || meta('og:title') || meta('twitter:title') || gm(/<title[^>]*>([^<]+)<\/title>/i);
-          let description = jsonLdData.description || meta('og:description') || meta('description') || meta('twitter:description');
-          let image = jsonLdData.image || meta('og:image') || meta('twitter:image');
-          let price = jsonLdData.price || 0;
-     
-          // Site-specific selectors
-          const host = new URL(url).hostname;
-          if (host.includes('tokopedia.com')) {
-            name = name || gm(/data-testid=["']product-name["'][^>]*>([^<]+)</i) || gm(/"name"\s*:\s*"([^"]+)"/i);
-            price = price || (gm(/data-testid=["']product-price["'][^>]*>([^<]+)</i) ? parseInt(gm(/data-testid=["']product-price["'][^>]*>([^<]+)</i).replace(/[^0-9]/g,'')) : 0);
-            description = description || gm(/data-testid=["']product-description["'][^>]*>([^<]+)</i);
-            image = image || gm(/data-testid=["']product-image["'][^>]*src=["']([^"']+)["']/i);
-          } else if (host.includes('shopee.co.id')) {
-            name = name || gm(/class=["'][^"']*product-title[^"']*["'][^>]*>([^<]+)</i) || gm(/"name"\s*:\s*"([^"]+)"/i);
-            price = price || (gm(/class=["'][^"']*price[^"']*["'][^>]*>([^<]+)</i) ? parseInt(gm(/class=["'][^"']*price[^"']*["'][^>]*>([^<]+)</i).replace(/[^0-9]/g,'')) : 0);
-            image = image || gm(/class=["'][^"']*product-image[^"']*["'][^>]*src=["']([^"']+)["']/i);
-          } else if (host.includes('bukalapak.com')) {
-            name = name || gm(/data-title=["']([^"']+)["']/i) || gm(/class=["'][^"']*product-name[^"']*["'][^>]*>([^<]+)</i);
-            price = price || (gm(/data-price=["']([^"']+)["']/i) ? parseInt(gm(/data-price=["']([^"']+)["']/i).replace(/[^0-9]/g,'')) : 0);
-            image = image || gm(/class=["'][^"']*product-image[^"']*["'][^>]*src=["']([^"']+)["']/i);
-          } else if (host.includes('lazada.co.id')) {
-            name = name || gm(/data-title=["']([^"']+)["']/i) || gm(/pd_title["']?\s*:\s*["']([^"']+)["']/i);
-            price = price || (gm(/data-price=["']([^"']+)["']/i) ? parseInt(gm(/data-price=["']([^"']+)["']/i).replace(/[^0-9]/g,'')) : 0);
-            image = image || gm(/src=["']([^"']+\.(?:jpg|jpeg|png|webp))["']/i);
-          } else if (host.includes('blibli.com')) {
-            name = name || gm(/class=["'][^"']*product-name[^"']*["'][^>]*>([^<]+)</i);
-            price = price || (gm(/class=["'][^"']*price[^"']*["'][^>]*>([^<]+)</i) ? parseInt(gm(/class=["'][^"']*price[^"']*["'][^>]*>([^<]+)</i).replace(/[^0-9]/g,'')) : 0);
-          }
-     
-          if (!price) {
-            const priceStr = meta('product:price:amount') || meta('price') || gm(/data-price=["']([^"']*)["']/i) || gm(/"price"\s*:\s*"?([\d.,]+)/i) || gm(/class=["'][^"']*price[^"']*["'][^>]*>([\d.,]+)/i);
-            if (priceStr) { price = parseInt(priceStr.replace(/[^0-9.,]/g,'').replace(/,/g,'')) || 0; }
-          }
-     
-          if (image && !image.startsWith('http')) { try { const u = new URL(url); image = u.origin + image; } catch {} }
-     
-          res.json({ name, description, price, image, url });
-        } catch (err) { res.status(500).json({ error: 'Failed to fetch: ' + err.message }); }
-      }
-
   getSettings(req, res) {
-    const settings = this.settingsManager.get();
-    settings.ai = {
-      endpoint: config.aiEndpoint,
-      model: config.aiModel,
-      hasApiKey: !!config.aiApiKey,
-      queueConcurrency: config.aiQueueConcurrency,
-      requestTimeout: config.aiRequestTimeout,
-      maxRetries: config.aiQueueMaxRetries
-    };
-    res.json(settings);
-  }
+      const settings = this.settingsManager.get();
+      const ai = settings.ai || {};
+      settings.ai = {
+        endpoint: ai.endpoint || config.aiEndpoint,
+        apiKey: ai.apiKey || config.aiApiKey,
+        model: ai.model || config.aiModel,
+        hasApiKey: !!(ai.apiKey || config.aiApiKey),
+        queueConcurrency: config.aiQueueConcurrency,
+        requestTimeout: config.aiRequestTimeout,
+        maxRetries: config.aiQueueMaxRetries
+      };
+      res.json(settings);
+    }
 
   updateSettings(req, res) {
-    res.json(this.settingsManager.set(req.body));
+    const result = this.settingsManager.set(req.body);
+    return res.json(result);
   }
 
   async testAIGateway(req, res) {
@@ -370,6 +143,450 @@ class MainController {
     const { getQueue } = require('../services/ai-queue');
     const queue = getQueue();
     res.json(queue ? queue.getStats() : { pending: 0, active: 0, completed: 0, failed: 0, queueLength: 0 });
+  }
+
+  // ===== SESSIONS =====
+  
+  async getSessions(req, res) {
+    try { res.json(sessionManager.getAllSessions()); }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async createSession(req, res) {
+    try {
+      const sessionData = { ...req.body, id: uuidv4() };
+      const session = sessionManager.createSession(sessionData);
+      res.json(session);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async getSession(req, res) {
+    try {
+      const session = sessionManager.getSession(req.params.id);
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+      res.json(session.getStatus());
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async updateSession(req, res) {
+    try {
+      const session = sessionManager.updateSession(req.params.id, req.body);
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+      res.json(session);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async deleteSession(req, res) {
+    try {
+      const result = await sessionManager.deleteSession(req.params.id);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async connectSession(req, res) {
+    try {
+      const result = await sessionManager.connectSession(req.params.id);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async disconnectSession(req, res) {
+    try {
+      const result = await sessionManager.disconnectSession(req.params.id);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async reconnectSession(req, res) {
+    try {
+      const result = await sessionManager.reconnectSession(req.params.id);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async restartSession(req, res) {
+    try {
+      const result = await sessionManager.restartSession(req.params.id);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  async getQRCode(req, res) {
+    try {
+      const { id } = req.params;
+      const session = sessionManager.getSession(id);
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+      const result = await session.getQRCode();
+      const qrImage = result.qrCode
+        ? await QRCode.toDataURL(result.qrCode)
+        : null;
+      res.json({ ...result, qrImage });
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  async regenerateQR(req, res) {
+    try {
+      const session = sessionManager.getSession(req.params.id);
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+
+      const result = await session.regenerateQR();
+      if (result?.error) return res.status(409).json(result);
+
+      const qrImage = result?.qrCode
+        ? await QRCode.toDataURL(result.qrCode)
+        : null;
+      res.json({ ...result, qrImage });
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  // ===== MESSAGES =====
+  
+  async sendMessage(req, res) {
+    try {
+      const { id } = req.params;
+      const { to, content } = req.body;
+      const session = sessionManager.getSession(id);
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+      const result = await session.sendMessage(to, content);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async getMessages(req, res) {
+    try {
+      const { id } = req.params;
+      const { limit } = req.query;
+      const session = sessionManager.getSession(id);
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+      const result = await session.getMessages(limit ? parseInt(limit) : undefined);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async getMessagesByDate(req, res) {
+    try {
+      const { id } = req.params;
+      const { date } = req.query;
+      const session = sessionManager.getSession(id);
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+      const result = await session.getMessagesByDate(date);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async getChats(req, res) {
+    try {
+      const { id } = req.params;
+      const session = sessionManager.getSession(id);
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+      const result = await session.getChats();
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  // ===== PROFILE =====
+  
+  async getProfile(req, res) {
+    try {
+      const { id } = req.params;
+      const result = this.profileManager.get(id);
+      if (!result) return res.status(404).json({ error: 'Profile not found' });
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async updateProfile(req, res) {
+    try {
+      const { id } = req.params;
+      const result = this.profileManager.update(id, req.body);
+      if (!result) return res.status(404).json({ error: 'Profile not found' });
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  // ===== PERSONA =====
+  
+  async getPersona(req, res) {
+    try {
+      const { id } = req.params;
+      const result = this.personaManager.get(id);
+      if (!result) return res.status(404).json({ error: 'Persona not found' });
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async updatePersona(req, res) {
+    try {
+      const { id } = req.params;
+      const result = this.personaManager.update(id, req.body);
+      if (!result) return res.status(404).json({ error: 'Persona not found' });
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async savePersonaPrompt(req, res) {
+    try {
+      const { id } = req.params;
+      const { prompt } = req.body;
+      const persona = this.personaManager.get(id);
+      if (!persona) return res.status(404).json({ error: 'Persona not found' });
+      const result = this.personaManager.update(id, { ...persona, prompt });
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  // ===== PRODUCTS =====
+  
+  async getProducts(req, res) {
+    try {
+      const { id } = req.params;
+      const result = this.productManager.list();
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async getProduct(req, res) {
+    try {
+      const { id, productId } = req.params;
+      const result = this.productManager.get(productId);
+      if (!result) return res.status(404).json({ error: 'Product not found' });
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async createProduct(req, res) {
+    try {
+      const { id } = req.params;
+      const result = this.productManager.create(req.body);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async updateProduct(req, res) {
+    try {
+      const { id, productId } = req.params;
+      const result = this.productManager.update(productId, req.body);
+      if (!result) return res.status(404).json({ error: 'Product not found' });
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async deleteProduct(req, res) {
+    try {
+      const { id, productId } = req.params;
+      const result = this.productManager.delete(productId);
+      if (!result) return res.status(404).json({ error: 'Product not found' });
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async searchProducts(req, res) {
+    try {
+      const { id } = req.params;
+      const { query } = req.query;
+      const result = this.productManager.search(query);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  async saveProducts(req, res) {
+    try {
+      const { id } = req.params;
+      const result = this.productManager.save(req.body);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  // ===== KNOWLEDGE =====
+  
+  async getKnowledge(req, res) {
+    try {
+      const { id } = req.params;
+      const result = this.knowledgeManager.list();
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async getKnowledgeItem(req, res) {
+    try {
+      const { id, knowledgeId } = req.params;
+      const result = this.knowledgeManager.get(knowledgeId);
+      if (!result) return res.status(404).json({ error: 'Knowledge item not found' });
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async createKnowledge(req, res) {
+    try {
+      const { id } = req.params;
+      const result = this.knowledgeManager.create(req.body);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async updateKnowledge(req, res) {
+    try {
+      const { id, knowledgeId } = req.params;
+      const result = this.knowledgeManager.update(knowledgeId, req.body);
+      if (!result) return res.status(404).json({ error: 'Knowledge item not found' });
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async deleteKnowledge(req, res) {
+    try {
+      const { id, knowledgeId } = req.params;
+      const result = this.knowledgeManager.delete(knowledgeId);
+      if (!result) return res.status(404).json({ error: 'Knowledge item not found' });
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async searchKnowledge(req, res) {
+    try {
+      const { id } = req.params;
+      const { query } = req.query;
+      const result = this.knowledgeManager.search(query);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  async fetchProduct(req, res) {
+    try {
+      const { id } = req.params;
+      const { url } = req.body;
+      if (!url) return res.status(400).json({ error: 'URL required' });
+      
+      // Fetch product data
+      const { JSDOM } = require('jsdom');
+      const { window } = new JSDOM('');
+      const gm = require('gm').configure({ imageMagick: true });
+      
+      const meta = name => window.document.querySelector(`meta[name='${name}']`);
+      
+      let name = meta('product:name') ? meta('product:name').content : '';
+      name = name || meta('og:title') ? meta('og:title').content : '';
+      name = name || meta('twitter:title') ? meta('twitter:title').content : '';
+      
+      const description = meta('product:description') ? meta('product:description').content : 
+                         meta('og:description') ? meta('og:description').content : '';
+      
+      let price = 0;
+      let image = meta('product:image') ? meta('product:image').content : '';
+      let productUrl = url;
+      
+      if (!price) {
+        const priceStr = meta('product:price:amount') || meta('price') || 
+                         window.document.querySelector('input[name="price"]')?.value || 
+                         window.document.querySelector('[class*="price"]')?.textContent;
+        if (priceStr) { price = parseInt(priceStr.replace(/[^0-9]/g,'')) || 0; }
+      }
+      
+      if (image && !image.startsWith('http')) { try { const u = new URL(url); image = u.origin + image; } catch {} }
+      
+      res.json({ name, description, price, image, url });
+    }
+    catch (err) { res.status(500).json({ error: 'Failed to fetch: ' + err.message }); }
+  }
+
+  // ===== CONVERSATION INBOX =====
+  
+  async getConversations(req, res) {
+    try {
+      const { id } = req.params;
+      const result = sessionManager.getConversations(req.params.id);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async getConversationMessages(req, res) {
+    try {
+      const { id, jid } = req.params;
+      const result = sessionManager.getConversationMessages(req.params.id, req.params.jid);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async getConversationStatus(req, res) {
+    try {
+      const { id, jid } = req.params;
+      const result = sessionManager.getConversationStatus(req.params.id, req.params.jid);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async sendHumanReply(req, res) {
+    try {
+      const { id } = req.params;
+      const { to, content } = req.body;
+      const result = await sessionManager.sendHumanReply(req.params.id, req.body);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async getAvatar(req, res) {
+    try {
+      const { id, jid } = req.params;
+      const result = await sessionManager.getAvatar(req.params.id, req.params.jid);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  // ===== BOT CONTROL =====
+  
+  async pauseBot(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await sessionManager.pauseBot(req.params.id);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+  
+  async resumeBot(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await sessionManager.resumeBot(req.params.id);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
   }
 }
 

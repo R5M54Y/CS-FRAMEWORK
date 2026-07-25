@@ -336,8 +336,12 @@ async function refreshSessionList() {
         const sessionsData = await sessionsRes.json();
         const healthData = await healthRes.json();
         
+        // API saat ini mengembalikan array langsung; dukung juga wrapper { sessions: [] }
+        const sessions = Array.isArray(sessionsData)
+            ? sessionsData
+            : (Array.isArray(sessionsData.sessions) ? sessionsData.sessions : []);
+        
         // Update stats cards
-        const sessions = sessionsData.sessions || [];
         const connected = sessions.filter(s => s.connected).length;
         const disconnected = sessions.filter(s => !s.connected && s.state !== 'connecting').length;
         const connecting = sessions.filter(s => s.state === 'connecting').length;

@@ -83,6 +83,12 @@ function setupSocketIO(httpServer) {
     io.to(`session:${data.sessionId}`).emit('session:loggedOut', data);
   });
 
+  // Bot state changes
+  sessionManager.on('bot:state', (data) => {
+    io.emit('bot:state', data);
+    io.to(`session:${data.sessionId}`).emit('bot:state', data);
+  });
+
   // AI Queue stats broadcast every 2s
   setInterval(() => {
     const queue = getQueue();

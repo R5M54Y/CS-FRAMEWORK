@@ -1,9 +1,18 @@
 {
   "sessions": [
     {
-      "id": "cfb416ec-d151-4e3f-81c9-7342ca81cc9d",
+      "id": "82073457-fba9-4684-a131-f1c36ea26f6b",
       "name": "Yoana",
-      "port": 3109,
+      "port": 3110,
+      "autoReconnect": true,
+      "autoReply": true,
+      "typingDelay": 1000,
+      "readDelay": 500
+    },
+    {
+      "id": "47cf6d00-f1e9-4e5d-af6c-e067a7ddee39",
+      "name": "RAMSAY",
+      "port": 3111,
       "autoReconnect": true,
       "autoReply": true,
       "typingDelay": 1000,

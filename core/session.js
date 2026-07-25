@@ -51,6 +51,8 @@ class Session extends EventEmitter {
     this.typingDelay = options.typingDelay || config.defaultTypingDelay;
     this.readDelay = options.readDelay || config.defaultReadDelay;
     this.autoReply = options.autoReply !== undefined ? options.autoReply : config.autoReply;
+    this.botEnabled = options.botEnabled !== false; // Default true, can be paused by human
+    this.botPausedBy = null; // Track who paused the bot
 
     this._setupConnectionHandlers();
     this.log.info(`Session ${sessionId} initialized`);
@@ -471,13 +473,154 @@ class Session extends EventEmitter {
   }
 
   async regenerateQR() {
-    if (this.state === 'connected') {
-      return { error: 'Already connected' };
+      if (this.state === 'connected') {
+        return { error: 'Already connected' };
+      }
+
+      // Jangan kembalikan QR lama yang mungkin sudah expired.
+      this.qrCode = null;
+      await this.disconnect();
+    
+      // Connect and wait for QR to be generated
+      const result = await this.connect();
+      if (result?.error) return result;
+    
+      // Wait for QR to be generated (max 10 seconds)
+      if (!this.qrCode) {
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            this.removeListener('qr', onQR);
+            reject(new Error('QR generation timeout'));
+          }, 10000);
+        
+          const onQR = (qr) => {
+            clearTimeout(timeout);
+            this.removeListener('qr', onQR);
+            resolve(qr);
+          };
+        
+          this.once('qr', onQR);
+        });
+      }
+    
+      return { qrCode: this.qrCode, attempts: this.qrAttempts };
+    }
+
+    async getQRCode() {
+      if (this.state === 'connected') {
+        return { error: 'Already connected' };
+      }
+      if (!this.qrCode) {
+        // Trigger QR generation if not available
+        if (this.state !== 'connecting') {
+          await this.connect();
+        }
+        // Wait briefly for QR to generate
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      return { qrCode: this.qrCode, attempts: this.qrAttempts };
+    }
+
+    // ===== CONVERSATION INBOX METHODS =====
+
+  async getConversationStatus(participant) {
+    const botPausedBy = this.botPausedBy;
+    let status = 'AUTO';
+    
+    if (botPausedBy === 'human') {
+      status = 'HUMAN';
+    } else if (botPausedBy) {
+      status = 'PAUSED';
     }
     
-    await this.disconnect();
-    return this.connect();
+    return {
+      sessionId: this.id,
+      participant,
+      botStatus: status,
+      botPausedBy,
+      botEnabled: this.isBotEnabled(),
+      lastMessage: this.messages.length > 0 ? this.messages[this.messages.length - 1].content : null
+    };
   }
+
+  async getConversationMessages(participant, count = 50) {
+    // Filter messages for this participant
+    const messages = this.messages.filter(msg => {
+      const jid = msg.from || msg.to || '';
+      const participantJid = participant + '@s.whatsapp.net';
+      
+      // Match exact JID or phone number
+      return jid === participantJid || 
+             jid === participant || 
+             jid.split('@')[0] === participant;
+    });
+    
+    return messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  }
+
+  async getConversations() {
+    // Build conversation list from messages
+    const participantMap = new Map();
+    
+    for (const msg of this.messages) {
+      if (msg.isOutgoing) continue; // Skip outgoing messages for conversation tracking
+      
+      const key = msg.user || msg.from || msg.to || `unknown`;
+      if (!participantMap.has(key)) {
+        participantMap.set(key, {
+          name: key,
+          avatar: null,
+          lastMessage: msg.content,
+          timestamp: msg.timestamp,
+          unread: 0,
+          botPausedBy: this.botPausedBy
+        });
+      }
+    }
+    
+    // Convert to array and sort by timestamp (newest first)
+    const result = Array.from(participantMap.values());
+    result.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    return result;
+  }
+
+  async getAvatar(jid) {
+    if (!this.sock) {
+      return { avatar: null, error: 'Not connected' };
+    }
+    
+    try {
+      const url = await this.sock.profilePictureUrl(jid, 'image');
+      return { avatar: url };
+    } catch (err) {
+      return { avatar: null, error: err.message };
+    }
+  }
+
+  // ===== BOT CONTROL =====
+
+  isBotEnabled() {
+    return this.botEnabled === true;
+  }
+
+  async pauseBot(pausedBy = 'human') {
+    this.botEnabled = false;
+    this.botPausedBy = pausedBy;
+    this.log.info(`Bot paused by ${pausedBy}`);
+    this.emit('bot:state', { sessionId: this.id, botEnabled: false, pausedBy });
+    return { success: true, botEnabled: false, pausedBy };
+  }
+
+  async resumeBot() {
+    this.botEnabled = true;
+    this.botPausedBy = null;
+    this.log.info('Bot resumed');
+    this.emit('bot:state', { sessionId: this.id, botEnabled: true, pausedBy: null });
+    return { success: true, botEnabled: true };
+  }
+
+  // ===== STATUS =====
 
   getStatus() {
     const uptime = this.startTime 
@@ -504,7 +647,9 @@ class Session extends EventEmitter {
       messageCount: this.messages.length,
       autoReply: this.autoReply,
       typingDelay: this.typingDelay,
-      readDelay: this.readDelay
+      readDelay: this.readDelay,
+      botEnabled: this.botEnabled,
+      botPausedBy: this.botPausedBy
     };
   }
 
