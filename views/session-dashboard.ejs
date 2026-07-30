@@ -203,29 +203,6 @@
                         <small class="form-help">Link to your marketplace store for product references</small>
                     </div>
 
-                    <!-- Knowledge Files - Upload Area -->
-                    <div class="form-group">
-                        <label>Knowledge Files</label>
-                        <div class="knowledge-dropzone" id="knowledge-dropzone">
-                            <div class="dropzone-content">
-                                <span class="dropzone-icon">📁</span>
-                                <p>Drag & drop files here, or <span class="dropzone-browse">browse</span></p>
-                                <small>Supports PDF, TXT, CSV, MD, JSON + Images (PNG, JPG, GIF, WebP, SVG) + Videos (MP4, WebM, OGG) — max 50MB</small>
-                            </div>
-                            <input type="file" id="knowledge-file-input" multiple accept=".pdf,.txt,.csv,.md,.json,.png,.jpg,.jpeg,.gif,.webp,.svg,.mp4,.webm,.ogg,.mov,.avi,.wmv" style="display:none">
-                        </div>
-                    </div>
-
-                    <!-- Uploaded Files List -->
-                    <div class="form-group">
-                        <label>Uploaded Files</label>
-                        <div class="knowledge-files-list" id="knowledge-files-list">
-                            <div class="empty-files-state">
-                                <p>No files uploaded yet</p>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Save Button -->
                     <div class="knowledge-actions">
                         <button class="btn btn-primary" id="save-knowledge-btn" onclick="saveKnowledgeConfig()">
@@ -240,11 +217,15 @@
             <div class="tab-panel" id="tab-gallery">
                 <div class="gallery-panel">
                     <h3>🖼️ Gallery</h3>
-                    <div id="gallery-dropzone">
-                        <div class="dz-message">Drag & drop images here or click to upload</div>
+                    <div class="gallery-upload-area" id="gallery-upload-area">
+                        <span class="gallery-upload-icon">📁</span>
+                        <p>Click or drag images here to upload</p>
+                        <small>PNG, JPG, GIF, WebP, SVG — max 10MB per file</small>
+                        <input type="file" id="gallery-file-input" multiple accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" style="display:none">
                     </div>
-                    <div id="gallery-preview-grid" class="gallery-preview-grid"></div>
-                    <div id="gallery-grid"></div>
+                    <div class="gallery-thumbnail-grid" id="gallery-thumbnail-grid">
+                        <div class="empty-state"><p>No images uploaded yet</p></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -343,7 +324,7 @@ function switchTab(tab) {
     });
     // Load data on tab switch
     if (tab === 'persona') loadPersona();
-    else if (tab === 'knowledge') { loadKnowledgeConfig(); loadKnowledgeFiles(); }
+    else if (tab === 'knowledge') { loadKnowledgeConfig(); }
     else if (tab === 'gallery') loadGallery();
 }
 
@@ -1032,75 +1013,55 @@ async function saveKnowledgeConfig() {
 socket.on('knowledge:updated', (data) => {
     if (data.sessionId === sessionId && currentTab === 'knowledge') {
         loadKnowledgeConfig();
-        loadKnowledgeFiles();
     }
 });
-// === DRAG & DROP FILE UPLOAD ===
-(function initDropzone() {
-    const dropzone = document.getElementById('knowledge-dropzone');
-    const fileInput = document.getElementById('knowledge-file-input');
-    if (!dropzone || !fileInput) return;
-    
-    dropzone.addEventListener('click', () => fileInput.click());
-    dropzone.querySelector('.dropzone-browse')?.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
-    
-    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
-    dropzone.addEventListener('dragleave', () => { dropzone.classList.remove('dragover'); });
-    dropzone.addEventListener('drop', (e) => {
+
+// ===== GALLERY =====
+function initGalleryUpload() {
+    const area = document.getElementById('gallery-upload-area');
+    const input = document.getElementById('gallery-file-input');
+    if (!area || !input) return;
+
+    area.addEventListener('click', () => input.click());
+
+    area.addEventListener('dragover', (e) => {
         e.preventDefault();
-        dropzone.classList.remove('dragover');
+        area.classList.add('dragover');
+    });
+    area.addEventListener('dragleave', () => {
+        area.classList.remove('dragover');
+    });
+    area.addEventListener('drop', (e) => {
+        e.preventDefault();
+        area.classList.remove('dragover');
         const files = e.dataTransfer.files;
         if (files.length > 0) {
-            // Check file types
-            const invalidFiles = Array.from(files).filter(file => {
-                const ext = file.name.toLowerCase().match(/\.(.+)$/);
-                const allowedTypes = [
-                    '.pdf', '.txt', '.csv', '.md', '.json',  // Documents
-                    '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg',  // Images
-                    '.mp4', '.webm', '.ogg', '.mov', '.avi', '.wmv'  // Videos
-                ];
-                return ext && !allowedTypes.includes(ext[1].toLowerCase());
-            });
-            if (invalidFiles.length > 0) {
-                showToast('Unsupported file types: ' + invalidFiles.map(f => f.name).join(', '), 'error');
-                return;
-            }
-            
-            // Check total size (assuming 50MB limit for media-heavy uploads)
-            const totalSize = Array.from(files).reduce((sum, f) => sum + f.size, 0);
-            if (totalSize > 50 * 1024 * 1024) {
-                showToast('Total file size exceeds 50MB limit', 'error');
-                return;
-            }
-            
-            uploadFiles(files);
+            uploadGalleryFiles(files);
         }
     });
-    
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files.length > 0) {
-            uploadFiles(fileInput.files);
-            fileInput.value = '';
+
+    input.addEventListener('change', () => {
+        if (input.files.length > 0) {
+            uploadGalleryFiles(input.files);
+            input.value = '';
         }
     });
-})();
-async function uploadFiles(fileList) {
+}
+
+async function uploadGalleryFiles(fileList) {
     for (const file of fileList) {
         if (file.size > 10 * 1024 * 1024) {
             showToast(`${file.name} exceeds 10MB limit`, 'error');
             continue;
         }
-        
         const formData = new FormData();
         formData.append('file', file);
-        
         try {
-            const res = await fetch('/api/session/' + sessionId + '/knowledge-files', {
+            const res = await fetch('/api/session/' + sessionId + '/gallery', {
                 method: 'POST',
                 body: formData
             });
             const data = await res.json();
-            
             if (data.error) {
                 showToast('Upload failed: ' + data.error, 'error');
             } else {
@@ -1111,12 +1072,52 @@ async function uploadFiles(fileList) {
             showToast(`Failed to upload ${file.name}`, 'error');
         }
     }
-    loadKnowledgeFiles();
+    loadGallery();
 }
 
-// Search filter
+async function loadGallery() {
+    const grid = document.getElementById('gallery-thumbnail-grid');
+    if (!grid) return;
+    grid.innerHTML = '<p>Loading...</p>';
+    try {
+        const res = await fetch('/api/session/' + sessionId + '/gallery');
+        const files = await res.json();
+        if (!Array.isArray(files) || files.length === 0) {
+            grid.innerHTML = '<div class="empty-state"><p>No images uploaded yet</p></div>';
+            return;
+        }
+        grid.innerHTML = files.map(f => `
+            <div class="gallery-thumb-item">
+                <img src="/api/session/${sessionId}/gallery/${f.id}/download" alt="${escapeHtml(f.originalName || '')}" loading="lazy">
+                <button class="gallery-thumb-delete" onclick="deleteGalleryFile('${f.id}')" title="Delete">✕</button>
+                <span class="gallery-thumb-name">${escapeHtml(f.originalName || '')}</span>
+            </div>
+        `).join('');
+    } catch(e) {
+        grid.innerHTML = '<div class="empty-state"><p style="color:red">Failed to load gallery</p></div>';
+    }
+}
 
-// ===== CLEAR CHAT =====
+async function deleteGalleryFile(fileId) {
+    if (!confirm('Delete this image?')) return;
+    try {
+        const res = await fetch('/api/session/' + sessionId + '/gallery/' + fileId, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Image deleted', 'success');
+            loadGallery();
+        } else {
+            showToast('Delete failed', 'error');
+        }
+    } catch(e) {
+        showToast('Delete failed', 'error');
+    }
+}
+
+// Initialize gallery upload on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initGalleryUpload();
+});
 function showClearChatModal() {
     document.getElementById('clear-chat-modal').style.display = 'flex';
 }

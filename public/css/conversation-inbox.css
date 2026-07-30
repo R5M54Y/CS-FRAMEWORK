@@ -930,3 +930,105 @@
   #gallery-grid {
     margin-top: 20px;
   }
+
+  /* Gallery upload area */
+  .gallery-upload-area {
+    border: 2px dashed var(--border, #ccc);
+    border-radius: var(--radius, 8px);
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 20px;
+  }
+  .gallery-upload-area:hover,
+  .gallery-upload-area.dragover {
+    border-color: var(--primary, #007bff);
+    background: rgba(0,123,255,0.05);
+  }
+  .gallery-upload-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .gallery-upload-area p {
+    margin: 4px 0;
+    font-weight: 500;
+  }
+  .gallery-upload-area small {
+    color: var(--text-muted, #888);
+  }
+
+  /* Gallery thumbnail grid */
+  .gallery-thumbnail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+  }
+  @media (max-width: 768px) {
+    .gallery-thumbnail-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  @media (max-width: 480px) {
+    .gallery-thumbnail-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* Gallery thumbnail item */
+  .gallery-thumb-item {
+    position: relative;
+    border-radius: var(--radius, 8px);
+    overflow: hidden;
+    background: var(--surface, #fff);
+    box-shadow: var(--shadow, 0 1px 3px rgba(0,0,0,0.08));
+    transition: box-shadow 0.2s;
+    aspect-ratio: 1;
+  }
+  .gallery-thumb-item:hover {
+    box-shadow: var(--shadow-lg, 0 4px 12px rgba(0,0,0,0.15));
+  }
+  .gallery-thumb-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .gallery-thumb-delete {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(220,53,69,0.9);
+    color: white;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .gallery-thumb-item:hover .gallery-thumb-delete {
+    display: flex;
+  }
+  .gallery-thumb-delete:hover {
+    background: rgb(220,53,69);
+  }
+  .gallery-thumb-name {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 4px 8px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
