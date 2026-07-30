@@ -18,6 +18,7 @@
 class FormattingRulesRegistry {
   constructor() {
     this._rules = this._buildDefaultRules();
+    this._emojiRegex = null; // lazy cache for hasKnownEmoji
   }
 
   /**
@@ -29,7 +30,7 @@ class FormattingRulesRegistry {
       // === PRICE / PAYMENT ===
       {
         id: 'price',
-        sectionPatterns: [/^harga/i, /^price/i, /^biaya/i, /^total/i],
+        sectionPatterns: [/^harga/i, /^price/i, /^biaya/i, /^promo/i, /^rp\b/i, /^total/i],
         itemPatterns: [
           /^rp\s?\d/i, /^rp\.?\s?\d/i,
           /^(harga|price|biaya|total|bayar|dibayar|tagihan)/i,
@@ -167,6 +168,7 @@ class FormattingRulesRegistry {
         sectionPatterns: [/^telepon/i, /^phone/i, /^hp\b/i, /^handphone/i, /^mobile/i],
         itemPatterns: [
           /^(whatsapp|wa\b|phone|telepon|hp|handphone|mobile|kontak|call)/i,
+          /(whatsapp|wa|telepon|phone)(?=.*\d)/i,
         ],
         sectionIcon: '📱',
         itemIcon: '📱',
@@ -376,7 +378,13 @@ class FormattingRulesRegistry {
     if (!text) return null;
     const lower = text.toLowerCase().trim();
     for (const rule of this._rules) {
-      const patterns = rule.itemPatterns || rule.sectionPatterns;
+      // Only use sectionPatterns for items if rule has itemIcon
+      // (rules without itemIcon are section-only: tips, customer, admin, etc.)
+      const hasItemPatterns = rule.itemPatterns && rule.itemPatterns.length > 0;
+      const useSectionFallback = !hasItemPatterns && rule.itemIcon;
+      if (!hasItemPatterns && !useSectionFallback) continue;
+
+      const patterns = hasItemPatterns ? rule.itemPatterns : rule.sectionPatterns;
       if (!patterns || patterns.length === 0) continue;
       for (const pattern of patterns) {
         if (pattern.test(lower)) return rule;
@@ -410,30 +418,21 @@ class FormattingRulesRegistry {
   /**
    * Check if text contains any known emoji from the registry.
    * Used by DetectFormattingStage to short-circuit.
+   * Regex is compiled once and cached for performance.
    * @param {string} text
    * @returns {boolean}
    */
   hasKnownEmoji(text) {
     if (!text) return false;
-    // Collect all unique icons from all rules
-    const icons = new Set();
-    for (const rule of this._rules) {
-      if (rule.sectionIcon) icons.add(rule.sectionIcon);
-      if (rule.itemIcon && rule.itemIcon !== rule.sectionIcon) icons.add(rule.itemIcon);
+    if (!this._emojiRegex) {
+      const icons = new Set();
+      for (const rule of this._rules) {
+        if (rule.sectionIcon) icons.add(rule.sectionIcon);
+        if (rule.itemIcon && rule.itemIcon !== rule.sectionIcon) icons.add(rule.itemIcon);
+      }
+      this._emojiRegex = new RegExp(Array.from(icons).join('|'), 'u');
     }
-    const joined = Array.from(icons).join('|');
-    const regex = new RegExp(joined, 'u');
-    return regex.test(text);
-  }
-
-  /** All emoji characters used by the registry (for DetectFormattingStage broad check) */
-  static get ALL_EMOJIS() {
-    return [
-      '🛒', '💬', '🔗', '📍', '📞', '📱', '💳', '🏦', '📲',
-      '🚚', '⬇️', '⬆️', '💰', '👤', '🙋', '✨', '📦', '🎁',
-      '🛡️', '🏷️', '🎉', '👉', '💡', '⭐', '❓', '📝', '⚠️',
-      '🕒', '✅', '❌', '♾️', '🧩', '📚', '📄', '🎥', '🖼️', '🔤',
-    ];
+    return this._emojiRegex.test(text);
   }
 }
 
