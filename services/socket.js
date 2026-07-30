@@ -38,32 +38,26 @@ function setupSocketIO(httpServer) {
 
   // Listen to session manager events and broadcast
   sessionManager.on('status', (data) => {
-    io.emit('session:status', data);
     io.to(`session:${data.sessionId}`).emit('session:status', data);
   });
 
   sessionManager.on('qr', (data) => {
-    io.emit('session:qr', data);
     io.to(`session:${data.sessionId}`).emit('session:qr', data);
   });
 
   sessionManager.on('ready', (data) => {
-    io.emit('session:ready', data);
     io.to(`session:${data.sessionId}`).emit('session:ready', data);
   });
 
   sessionManager.on('message', (data) => {
-    io.emit('session:message', data);
     io.to(`session:${data.sessionId}`).emit('session:message', data);
   });
 
   sessionManager.on('sent', (data) => {
-    io.emit('session:sent', data);
     io.to(`session:${data.sessionId}`).emit('session:sent', data);
   });
 
   sessionManager.on('error', (data) => {
-    io.emit('session:error', data);
     io.to(`session:${data.sessionId}`).emit('session:error', data);
   });
 
@@ -79,19 +73,16 @@ function setupSocketIO(httpServer) {
   });
 
   sessionManager.on('loggedOut', (data) => {
-    io.emit('session:loggedOut', data);
     io.to(`session:${data.sessionId}`).emit('session:loggedOut', data);
   });
 
   // Bot state changes
   sessionManager.on('bot:state', (data) => {
-    io.emit('bot:state', data);
     io.to(`session:${data.sessionId}`).emit('bot:state', data);
   });
 
   // Messages cleared
   sessionManager.on('messages-cleared', (data) => {
-    io.emit('session:messages-cleared', data);
     io.to(`session:${data.sessionId}`).emit('session:messages-cleared', data);
   });
 

@@ -262,6 +262,12 @@ let selectedParticipant = null;
 let messagesCache = [];
 let qrModalOpen = false;
 
+// === PARTICIPANT NORMALIZATION ===
+function normalizeParticipant(id) {
+    if (!id) return '';
+    return id.replace(/@[sw]\.whatsapp\.net$|@lid$/i, '');
+}
+
 // === UTILITY FUNCTIONS ===
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -523,14 +529,14 @@ socket.on('session:ready', (data) => {
 });
 socket.on('session:message', (data) => { 
     if (data.sessionId === sessionId) {
-        if (selectedParticipant && (data.user === selectedParticipant || data.from === selectedParticipant)) {
+        if (selectedParticipant && (normalizeParticipant(data.user) === selectedParticipant || normalizeParticipant(data.from) === selectedParticipant)) {
             appendMessage(data);
         }
         loadConversations();
     }
 });
 socket.on('session:sent', (data) => { 
-    if (data.sessionId === sessionId && selectedParticipant && (data.user === selectedParticipant || data.to === selectedParticipant)) {
+    if (data.sessionId === sessionId && selectedParticipant && (normalizeParticipant(data.user) === selectedParticipant || normalizeParticipant(data.to) === selectedParticipant)) {
         appendMessage(data);
     }
 });
@@ -650,7 +656,7 @@ function renderMessages(messages) {
     }
     
     container.innerHTML = messages.map(msg => {
-        const isOutgoing = msg.isOutgoing || msg.to === selectedParticipant;
+        const isOutgoing = msg.isOutgoing || normalizeParticipant(msg.to) === selectedParticipant;
         const isFromMe = msg.user === 'human' || msg.fromMe;
         const bubbleClass = isFromMe ? 'human' : (msg.user === 'bot' ? 'bot' : 'customer');
         
@@ -680,7 +686,7 @@ function appendMessage(msg) {
     const emptyState = container.querySelector('.empty-state');
     if (emptyState) emptyState.remove();
     
-    const isOutgoing = msg.isOutgoing || msg.to === selectedParticipant;
+    const isOutgoing = msg.isOutgoing || normalizeParticipant(msg.to) === selectedParticipant;
     const isFromMe = msg.user === 'human' || msg.fromMe;
     const bubbleClass = isFromMe ? 'human' : (msg.user === 'bot' ? 'bot' : 'customer');
     
