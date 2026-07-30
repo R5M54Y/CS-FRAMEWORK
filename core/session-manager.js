@@ -113,6 +113,7 @@ class SessionManager extends EventEmitter {
     const session = new Session(data.id, {
 
       name: data.name,
+      holder: data.holder,
 
       autoReconnect: data.autoReconnect !== false,
 
@@ -197,6 +198,7 @@ class SessionManager extends EventEmitter {
         id: st.id,
 
         name: st.name,
+        holder: st.holder,
 
         port: st.port,
 
@@ -703,6 +705,10 @@ class SessionManager extends EventEmitter {
 
       session.options.name = data.name;
 
+    }
+
+    if (data.holder !== undefined) {
+      session.holder = data.holder;
     }
 
     const profileData = {};
