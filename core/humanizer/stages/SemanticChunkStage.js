@@ -20,7 +20,7 @@ class SemanticChunkStage {
   }
 
   /** Lines matching this pattern are section headers (emoji prefix + keyword + colon) */
-  static HEADER_PATTERN = /^[📦✅💰🕒🚚⬇️⬆️✨🎁🛡️🏷️🎉👉💡⭐❓📝⚠️❌♾️🔗🧩📚📄🎥🖼️🔤🛒💬📞📱💳🏦📲👤🙋]\s.+:$/u;
+  static HEADER_PATTERN = /^[📦💰✨✳️👉💳📞📍🕒🚚⬇️🎁🛡️📝❓💡⭐✅❌🔗🛒📚📄🃏🧩🏡♻️📧⬆️✅👶] .+:$/u;
 
   /**
    * @param {string} text

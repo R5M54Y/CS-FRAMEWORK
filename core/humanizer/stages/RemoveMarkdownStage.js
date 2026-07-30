@@ -4,11 +4,10 @@
  * RemoveMarkdownStage — Stage 2 of the Humanizer pipeline.
  *
  * Responsibilities:
- * - Strip markdown emphasis markers: **bold**, *italic*, _italic_, __underline__, ***bold-italic***
- * - Preserve real content: C++, A* Algorithm, 2 * 5, __FILE__, __init__
+ * - Strip markdown emphasis EXCEPT **bold** (which is allowed for readability)
+ * - Strip: *italic*, _italic_, __underline__, ***bold-italic***, ~~strike~~
+ * - Preserve: **bold**, real content like C++, A* Algorithm, 2 * 5, __FILE__
  * - Never modify code blocks, URLs, prices, or phone numbers
- *
- * Output is plain text only. No markdown formatting reaches WhatsApp.
  */
 class RemoveMarkdownStage {
   constructor(options = {}) {
@@ -24,16 +23,16 @@ class RemoveMarkdownStage {
 
     let result = text;
 
-    // Strip ***bold-italic*** first (before standalone * or **)
+    // Strip ***bold-italic*** first (before standalone * handling)
     result = result.replace(/\*\*\*(.+?)\*\*\*/g, '$1');
 
-    // Strip **bold**
-    result = result.replace(/\*\*(.+?)\*\*/g, '$1');
+    // Strip *italic* — only single asterisks, NOT double (bold)
+    // Opening * must NOT be followed by * (to avoid matching **bold**)
+    // Closing * must NOT be preceded by * (to avoid matching **bold**)
+    result = result.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '$1');
 
-    // Strip *italic* — but only if paired (opening + closing)
-    // The non-greedy match ensures only paired asterisks are stripped
-    // Single asterisks like A* Algorithm or 2 * 5 are left alone
-    result = result.replace(/\*(.+?)\*/g, '$1');
+    // Strip ~~strike~~
+    result = result.replace(/~~(.+?)~~/g, '$1');
 
     // Strip __underline__ and _italic_
     // Use negative lookbehind/lookahead to avoid matching __init__, __FILE__, etc.

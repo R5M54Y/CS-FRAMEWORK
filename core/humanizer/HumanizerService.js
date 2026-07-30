@@ -264,8 +264,15 @@ class HumanizerService {
     // Run each stage in sequence. Each stage receives the previous stage's output.
     // Stages: Normalize → RemoveMarkdown → DetectFormatting → DetectSections → DetectStructure → DetectLists → DetectSpecialBlocks → SemanticAnalyzer → Decorate → SemanticChunk → ImproveSpacing → SplitLongMessages → FinalNormalize
     for (const stage of this._stages) {
-      // DetectFormattingStage sets meta.alreadyFormatted — short-circuit after it
-      if (result.meta.alreadyFormatted && stage.name !== 'NormalizeStage' && stage.name !== 'DetectFormattingStage') {
+      // DetectFormattingStage sets meta.alreadyFormatted — skip decoration stages,
+      // but still run structural stages (chunking, spacing, normalize)
+      if (result.meta.alreadyFormatted && 
+          stage.name !== 'NormalizeStage' && 
+          stage.name !== 'DetectFormattingStage' &&
+          stage.name !== 'SemanticChunkStage' &&
+          stage.name !== 'ImproveSpacingStage' &&
+          stage.name !== 'SplitLongMessagesStage' &&
+          stage.name !== 'FinalNormalizeStage') {
         continue;
       }
       result = stage.process(result.text, result.meta);
