@@ -57,6 +57,13 @@ class PromptBuilder {
       // Media tool capability
       parts.push(this._sectionMediaTool());
 
+      // Marketplace URL policy — strict rules
+      if (knowledgeConfig?.marketplaceUrl) {
+        parts.push(this._sectionMarketplaceUrl(knowledgeConfig.marketplaceUrl));
+      } else {
+        parts.push(this._sectionMarketplaceUrl(null));
+      }
+
       // Knowledge base (from config)
       const kbSection = this._sectionKnowledgeBase(knowledgeConfig);
       if (kbSection) parts.push(kbSection);
@@ -100,6 +107,13 @@ class PromptBuilder {
 
     // Media tool capability
     parts.push(this._sectionMediaTool());
+
+    // Marketplace URL policy — strict rules
+    if (knowledgeConfig?.marketplaceUrl) {
+      parts.push(this._sectionMarketplaceUrl(knowledgeConfig.marketplaceUrl));
+    } else {
+      parts.push(this._sectionMarketplaceUrl(null));
+    }
 
     // Products
     if (products && products.length > 0) {
@@ -205,6 +219,37 @@ class PromptBuilder {
     }
     if (parts.length === 0) return null;
     return parts.join('\n');
+  }
+
+  _sectionMarketplaceUrl(url) {
+    if (url) {
+      return [
+        'MARKETPLACE LINK:',
+        '',
+        `Marketplace URL: ${url}`,
+        '',
+        'ATURAN KETAT UNTUK MARKETPLACE URL:',
+        '- Hanya gunakan URL di atas. JANGAN gunakan URL lain.',
+        '- JANGAN mengubah, memendekkan, atau mengganti URL marketplace.',
+        '- JANGAN membuat URL dari ingatan atau dari percakapan sebelumnya.',
+        '- JANGAN menambahkan spasi, mengubah huruf kapital, atau menulis ulang domain.',
+        '- Gunakan URL PERSIS seperti yang diberikan di atas. Karakter per karakter.',
+        '- Jangan melakukan autocomplete pada URL.',
+        '- Jangan mengganti URL dengan marketplace lain.',
+      ].join('\n');
+    }
+    return [
+      'MARKETPLACE LINK:',
+      '',
+      'TIDAK ADA URL MARKETPLACE.',
+      '',
+      'ATURAN KETAT:',
+      '- JANGAN membuat URL marketplace palsu.',
+      '- JANGAN menggunakan URL dari ingatan atau percakapan sebelumnya.',
+      '- Jika pelanggan meminta link pembelian, jawab:',
+      '"Maaf Kak, saat ini saya belum menerima link pembelian yang valid. Silakan hubungi admin terlebih dahulu."',
+      '- Jangan membuat URL pembelian dari pengetahuan Anda sendiri.',
+    ].join('\n');
   }
 
   _sectionRules(persona) {
