@@ -1,21 +1,24 @@
 # WhatsApp Customer Service Framework
 
-A lightweight, modular, production-ready WhatsApp Customer Service Framework built with **Node.js**, **Baileys**, **Express**, and **Socket.IO**.
+A lightweight, production-ready WhatsApp Customer Service Framework built with **Node.js v24**, **Baileys v7**, **Express**, **SQLite3**, and **Socket.IO**.
 
 ## Features
 
 - **Multi-Session** — Unlimited WhatsApp Business accounts, each with independent auth, connection, and config
 - **QR Authentication** — Scan QR codes from terminal or web UI
 - **Web Dashboard** — Manage all sessions from a single control panel
-- **Session Dashboard** — Per-session control panel for messages, products, knowledge, persona, and profile
-- **Product Manager** — Per-session product catalog with search
+- **SQLite3 Storage** — All data persisted to a single WAL-mode SQLite3 database. No external DB required.
+- **REST API** — Full HTTP API with Bearer token auth
+- **JWT Authentication** — All API endpoints protected by configurable Bearer token
+- **Product Manager** — Per-session product catalog with CRUD and search
 - **Knowledge Base** — FAQ, policies, company info — per session
 - **Persona System** — Define CS agent persona (role, tone, guidelines)
 - **Profile Manager** — Company info, greeting, working hours, signature
-- **REST API** — Full HTTP API for programmatic control
 - **Real-time Updates** — Socket.IO for live message, status, and QR updates
-- **Lightweight Storage** — JSON-based, zero external databases
-- **Plugin-ready** — Extendable architecture for AI integrations (OpenAI, Gemini, Claude, etc.)
+- **Auto Migration** — Legacy JSON data auto-imported to SQLite3 on first run
+- **AI Integration** — OpenAI-compatible gateway (DeepSeek, GPT, etc.)
+- **Humanizer** — Natural language post-processing for outgoing messages
+- **Graceful Shutdown** — SIGTERM/SIGINT handling, DB close, port cleanup
 - **Cross-platform** — Windows, Linux, macOS
 
 ## Quick Start
@@ -30,6 +33,7 @@ npm install
 
 # Configure
 cp .env.example .env
+# Edit .env — set SESSION_SECRET, AI_ENDPOINT, etc.
 
 # Start
 npm start
@@ -41,32 +45,56 @@ Open **http://localhost:3000** in your browser.
 
 ```
 project/
-├── app.js                  # Main entry point
-├── config/                 # Configuration
-├── core/                   # Core modules
-│   ├── session.js          # WhatsApp session (Baileys wrapper)
-│   ├── session-manager.js  # Multi-session orchestrator
-│   └── storage.js          # JSON storage managers
-├── controllers/            # Route handlers
-├── routes/                 # API & Web routes
-├── middleware/             # Express middleware
-├── services/              # Socket.IO service
-├── views/                 # EJS templates
-├── public/               # Static assets
-├── data/                 # JSON data storage
-├── sessions/             # Auth state per session
-├── logs/                 # Rotated log files
-└── utils/                # Utilities (logger)
+├── app.js                  # Main entry point (async init, graceful shutdown)
+├── config/                 # Environment-based configuration
+├── core/
+│   ├── database.js         # SQLite3 connection manager (WAL, FKs, serialized writes)
+│   ├── db-migrate.js       # One-time migration from JSON → SQLite3
+│   ├── session.js          # WhatsApp session (Baileys WASocket wrapper)
+│   ├── session-manager.js  # Multi-session orchestrator (async, SQLite-backed)
+│   ├── storage.js          # SQLite3-backed stores: Product, Knowledge, Profile, Persona, Settings, Message
+│   └── index.js            # Module barrel + initCore()
+├── controllers/            # Route handlers (async, lazy SM accessor)
+├── routes/                 # REST API (api.js) & Web routes (web.js)
+├── middleware/             # Auth (JWT Bearer), Error handler, CORS, Rate limiter, Request logger
+├── services/              # Socket.IO, AI gateway, Humanizer, Reply service
+├── views/                 # EJS dashboard templates
+├── public/                # Static JS/CSS assets
+├── data/                  # SQLite3 DB + empty dirs for migration sources
+├── sessions/              # Baileys auth state (per session)
+├── logs/                  # Rotated Winston log files
+└── utils/                 # Winston logger, file upload helper
 ```
+
+### Data Flow
+
+```
+WhatsApp ←→ Baileys ←→ Session.js ←→ SessionManager ←→ SQLite3 (core/database.js)
+                                      ↕
+                              Controllers ←→ REST API ←→ Dashboard (EJS + Socket.IO)
+                                      ↕
+                              AI Gateway (services/ai.js) ←→ OpenAI-compatible endpoint
+```
+
+## Database
+
+SQLite3 with WAL journal mode. Single file: `data/cs-framework.db`.
+
+**9 tables:** sessions, messages, products, knowledge_base, personas, profiles, settings, knowledge_config, persona_prompts
+
+**Safety:** WAL mode, foreign keys ON, `BEGIN IMMEDIATE` transactions, serialized write queue, prepared statements (no SQL injection), busy timeout 5000ms.
 
 ## REST API
 
+All `/api/*` endpoints require `Authorization: Bearer <SESSION_SECRET>` header.
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | /health | Health check |
+| GET | /health | Health check (no auth) |
 | GET | /api/sessions | List all sessions |
 | POST | /api/session | Create new session |
 | GET | /api/session/:id | Get session status |
+| PUT | /api/session/:id | Update session |
 | DELETE | /api/session/:id | Delete session |
 | POST | /api/session/:id/connect | Connect session |
 | POST | /api/session/:id/disconnect | Disconnect session |
@@ -74,61 +102,69 @@ project/
 | POST | /api/session/:id/restart | Restart session |
 | GET | /api/session/:id/qrcode | Get QR code |
 | POST | /api/session/:id/send | Send message |
-| GET | /api/session/:id/messages | Get recent messages |
-| GET | /api/session/:id/messages/date?date=DATE | Get messages by date |
+| GET | /api/session/:id/messages | Get messages (paginated) |
+| GET | /api/session/:id/messages/date?date=YYYY-MM-DD | Get messages by date |
 | GET | /api/session/:id/chats | Get chat list |
 | GET | /api/session/:id/profile | Get profile |
 | PUT | /api/session/:id/profile | Update profile |
-| GET | /api/session/:id/persona | Get persona |
-| PUT | /api/session/:id/persona | Update persona |
-| GET | /api/session/:id/products | Get products |
+| GET | /api/session/:id/persona | Get AI persona config |
+| PUT | /api/session/:id/persona | Update AI persona |
+| GET | /api/session/:id/products | List products |
 | POST | /api/session/:id/products | Add product |
 | PUT | /api/session/:id/products/:productId | Update product |
 | DELETE | /api/session/:id/products/:productId | Delete product |
-| GET | /api/session/:id/knowledge | Get knowledge base |
+| POST | /api/session/:id/products/fetch | Fetch product URL metadata |
+| GET | /api/session/:id/knowledge | List knowledge base |
 | POST | /api/session/:id/knowledge | Add knowledge article |
 | PUT | /api/session/:id/knowledge/:knowledgeId | Update article |
 | DELETE | /api/session/:id/knowledge/:knowledgeId | Delete article |
+| GET | /api/settings | Get global settings |
+| PUT | /api/settings | Update global settings |
+| GET | /api/session/:id/conversations | List conversations |
+| GET | /api/session/:id/conversations/:jid/messages | Get conversation history |
+| POST | /api/session/:id/conversations/reply | Send human reply |
+| POST | /api/ai/test | Test AI gateway connection |
+| GET | /api/ai/queue | AI request queue stats |
 
 ## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| PORT | 3000 | Main dashboard port |
+| PORT | 3000 | HTTP port |
 | HOST | 0.0.0.0 | Bind address |
-| SESSION_PORT_START | 3100 | Start of per-session port range |
-| SESSION_PORT_END | 3200 | End of per-session port range |
-| DATA_PATH | ./data | Data storage directory |
-| SESSIONS_PATH | ./sessions | Session auth directory |
-| LOGS_PATH | ./logs | Log directory |
-| LOG_LEVEL | info | Log level (error/warn/info/debug) |
-| AUTO_REPLY | true | Auto-reply to messages |
+| NODE_ENV | production | Environment |
+| SESSION_SECRET | (required) | Bearer token for API auth |
+| CORS_ORIGIN | http://localhost:3000 | Allowed CORS origin |
+| AI_ENDPOINT | http://localhost:20128/v1 | OpenAI-compatible endpoint |
+| AI_MODEL | oc/deepseek-v4-flash-free | Model name |
+| AI_API_KEY | (your key) | API key |
+| LOG_LEVEL | info | Winston log level |
+| DATA_PATH | ./data | Data directory |
+| SESSIONS_PATH | ./sessions | Auth state directory |
+
+## Migration from JSON Storage
+
+On first run, the app auto-imports legacy JSON data from the `data/` directory:
+
+- `data/sessions/index.json` → `sessions` table
+- `data/settings.json` → `settings` table  
+- `data/profiles/*.json` → `profiles` table
+- `data/personas/*.json` → `personas` table
+- `data/products/*.json` → `products` table
+- `data/knowledge/*.json` → `knowledge_base` table
+
+Migration is idempotent — safe to run multiple times.
 
 ## Portability
 
-Copy the entire project folder to another computer:
-
 ```bash
-# On new machine
 git clone <repo-url>
 npm install
 cp .env.example .env
+# Copy data/cs-framework.db for database
+# Copy sessions/ dir for WhatsApp auth state
 npm start
 ```
-
-Your `sessions/` folder contains WhatsApp auth state — copy it along with `data/` to preserve all sessions and authentication.
-
-## Extending
-
-The framework is designed for plugins. Future modules for AI integration:
-
-- OpenAI / ChatGPT
-- Google Gemini
-- Anthropic Claude
-- Ollama (local LLMs)
-- DeepSeek
-- CRM / ERP / Ticket systems
-- Analytics & Webhooks
 
 ## License
 

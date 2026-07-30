@@ -1,5 +1,6 @@
 <%- include('partials/header') %>
 <link rel="stylesheet" href="/css/conversation-inbox.css">
+<link rel="stylesheet" href="/node_modules/dropzone/dist/min/dropzone.min.css">
 <section class="session-dashboard">
     <div class="container">
         <div class="session-header">
@@ -64,6 +65,7 @@
             <button class="tab-btn active" data-tab="chats" onclick="switchTab('chats')">💬 Chats</button>
             <button class="tab-btn" data-tab="persona" onclick="switchTab('persona')">🎭 Persona</button>
             <button class="tab-btn" data-tab="knowledge" onclick="switchTab('knowledge')">📚 Knowledge</button>
+            <button class="tab-btn" data-tab="gallery" onclick="switchTab('gallery')">🖼️ Gallery</button>
         </div>
 
         <!-- TAB: Chats -->
@@ -134,10 +136,6 @@
         <!-- TAB: Persona -->
         <div class="tab-panel" id="tab-persona">
             <div class="persona-panel">
-                <div class="persona-header">
-                    <h3>🎭 Persona</h3>
-                    <p class="persona-subtitle">Define your AI's personality and behavior for this session</p>
-                </div>
                 <div class="persona-form">
                     <div class="form-group">
                         <label for="persona-prompt">AI Personality Prompt</label>
@@ -161,10 +159,6 @@
         <!-- TAB: Knowledge -->
         <div class="tab-panel" id="tab-knowledge">
             <div class="knowledge-panel">
-                <div class="knowledge-header">
-                    <h3>📚 Knowledge Base</h3>
-                    <p class="knowledge-subtitle">Configure knowledge sources and upload documents for AI context</p>
-                </div>
                 <div class="knowledge-form">
                     <!-- Knowledge Prompt -->
                     <div class="form-group">
@@ -221,12 +215,26 @@
                     </div>
                 </div>
             </div>
+
+            <!-- TAB: Gallery -->
+            <div class="tab-panel" id="tab-gallery">
+                <div class="gallery-panel">
+                    <h3>🖼️ Gallery</h3>
+                    <div id="gallery-dropzone">
+                        <div class="dz-message">Drag & drop images here or click to upload</div>
+                    </div>
+                    <div id="gallery-preview-grid" class="gallery-preview-grid"></div>
+                    <div id="gallery-grid"></div>
+                </div>
+            </div>
         </div>
     </div>
 </section>
 
+<script src="/node_modules/dropzone/dist/min/dropzone.min.js"></script>
 <script>
 const sessionId = '<%= session.id %>';
+const _API_TOKEN = '<%= typeof apiToken !== 'undefined' ? apiToken : '' %>';
 const socket = io();
 socket.emit('join-session', sessionId);
 
@@ -310,6 +318,7 @@ function switchTab(tab) {
     // Load data on tab switch
     if (tab === 'persona') loadPersona();
     else if (tab === 'knowledge') { loadKnowledgeConfig(); loadKnowledgeFiles(); }
+    else if (tab === 'gallery') loadGallery();
 }
 
 // === QR MODAL FUNCTIONS ===
@@ -1019,5 +1028,70 @@ async function uploadFiles(fileList) {
 }
 
 // Search filter
+
+// ===== GALLERY (Dropzone) =====
+let galleryDropzone = null;
+
+function initGalleryDropzone() {
+    if (typeof Dropzone === 'undefined') { console.warn('Dropzone not loaded'); return; }
+    const el = document.getElementById('gallery-dropzone');
+    if (!el) return;
+    galleryDropzone = new Dropzone('#gallery-dropzone', {
+        url: '/api/session/' + sessionId + '/gallery',
+        maxFilesize: 50,
+        maxFiles: 10,
+        acceptedFiles: 'image/*',
+        addRemoveLinks: true,
+        headers: { 'Authorization': 'Bearer ' + _API_TOKEN },
+        success: function(file, resp) {
+            showToast('Uploaded successfully', 'success');
+            loadGallery();
+        },
+        error: function(file, resp) {
+            showToast('Upload failed: ' + (resp.error || resp), 'error');
+        }
+    });
+}
+
+async function loadGallery() {
+    const grid = document.getElementById('gallery-preview-grid');
+    if (!grid) return;
+    grid.innerHTML = '<p>Loading...</p>';
+    try {
+        const res = await fetch('/api/session/' + sessionId + '/gallery');
+        const files = await res.json();
+        if (!Array.isArray(files) || files.length === 0) {
+            grid.innerHTML = '<p>No images uploaded yet</p>';
+            return;
+        }
+        grid.innerHTML = files.map(f =>
+            '<div style="border:1px solid #ddd;padding:8px;border-radius:4px;text-align:center">' +
+            '<img src="/api/session/' + sessionId + '/gallery/' + f.id + '/download" style="max-width:100%;max-height:150px" /><br/>' +
+            '<small>' + (f.originalName || '') + '</small>' +
+            '<br/><button onclick="deleteGallery(\'' + f.id + '\')" style="margin-top:4px;font-size:12px">Delete</button>' +
+            '</div>'
+        ).join('');
+    } catch(e) {
+        grid.innerHTML = '<p style="color:red">Failed to load gallery</p>';
+    }
+}
+
+async function deleteGallery(fileId) {
+    if (!confirm('Delete this image?')) return;
+    try {
+        const res = await fetch('/api/session/' + sessionId + '/gallery/' + fileId, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + _API_TOKEN } });
+        const data = await res.json();
+        if (data.success) { showToast('Deleted', 'success'); loadGallery(); }
+        else showToast('Delete failed', 'error');
+    } catch(e) {
+        showToast('Delete failed', 'error');
+    }
+}
+
+// Initialize gallery when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Delay init to ensure Dropzone script is loaded
+    setTimeout(initGalleryDropzone, 500);
+});
 </script>
 <%- include('partials/footer') %>

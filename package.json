@@ -11,21 +11,23 @@
     "@whiskeysockets/baileys": "^7.0.0-rc13",
     "axios": "^1.7.9",
     "bottleneck": "^2.19.5",
+    "cheerio": "^1.2.0",
     "dotenv": "^16.4.7",
+    "dropzone": "^5.9.3",
     "ejs": "^3.1.10",
     "express": "^4.21.2",
-    "fs-extra": "^11.2.0",
-    "node-cron": "^3.0.3",
+    "fs-extra": "^11.4.0",
     "pino": "^9.6.0",
+    "playwright": "^1.62.0",
     "qrcode": "^1.5.4",
-    "qrcode-terminal": "^0.12.0",
     "socket.io": "^4.8.1",
+    "sqlite3": "^6.0.1",
     "uuid": "^11.1.0",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
   "engines": {
-    "node": "^20 || ^22"
+    "node": "^24"
   },
   "license": "MIT"
 }

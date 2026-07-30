@@ -1,10 +1,11 @@
 'use strict';
 
+const config = require('../config');
 const PromptBuilder = require('./prompt-builder');
 const { createQueue, getQueue } = require('./ai-queue');
 const { createSessionLogger } = require('../utils/logger');
-const config = require('../config');
 const HumanizerService = require('../core/humanizer/HumanizerService');
+const messageRepo = require('../core/repositories/MessageRepository');
 
 /**
  * ReplyService — orchestrates the full AI reply flow
@@ -48,15 +49,19 @@ class ReplyService {
 
     const profile = this.sessionManager.getProfile(sessionId);
     const persona = this.sessionManager.getPersona(sessionId);
+    const personaPrompt = this.sessionManager.getPersonaPrompt(sessionId);
     const products = this.sessionManager.getProducts(sessionId);
     const knowledge = this.sessionManager.getKnowledge(sessionId);
-    const history = this._buildHistory(session.messages, from);
+    const knowledgeConfig = this.sessionManager.getKnowledgeConfig(sessionId);
+    const history = await this._buildHistory(session, from);
 
     const messages = this.promptBuilder.build({
       persona,
+      personaPrompt,
       profile,
       products,
       knowledge,
+      knowledgeConfig,
       history,
       userMessage: message.content
     });
@@ -110,17 +115,31 @@ class ReplyService {
     await session.sendMessage(to, fallback);
   }
 
-  _buildHistory(messages, contactJid) {
-    const history = [];
-    for (const msg of messages) {
-      if (msg.from === contactJid || msg.to === contactJid) {
-        history.push({
-          role: msg.isOutgoing ? 'assistant' : 'user',
-          content: msg.content
-        });
+  async _buildHistory(session, contactJid) {
+    // Try cache first (fast path)
+    if (session.messages && session.messages.length > 0) {
+      const history = [];
+      for (const msg of session.messages) {
+        if (msg.from === contactJid || msg.to === contactJid) {
+          history.push({
+            role: msg.isOutgoing ? 'assistant' : 'user',
+            content: msg.content
+          });
+        }
       }
+      if (history.length > 0) return history.slice(-this.maxHistory);
     }
-    return history.slice(-this.maxHistory);
+    // Fall back to SQLite (authoritative)
+    try {
+      const msgs = await messageRepo.findByChatForHistory(session.id, contactJid, this.maxHistory);
+      return msgs.map(msg => ({
+        role: msg.isOutgoing ? 'assistant' : 'user',
+        content: msg.content
+      }));
+    } catch (err) {
+      this.log.error(`_buildHistory DB error: ${err.message}`);
+      return [];
+    }
   }
 }
 

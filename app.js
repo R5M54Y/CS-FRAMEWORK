@@ -12,6 +12,7 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 const config = require('./config');
 const { logger } = require('./utils/logger');
 const sessionManager = require('./core/session-manager');
+const { migrateAll } = require('./core/db-migrate');
 const { setupSocketIO } = require('./services/socket');
 const apiRoutes = require('./routes/api');
 const webRoutes = require('./routes/web');
@@ -40,6 +41,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Static files (must be BEFORE routes)
 app.use(express.static(config.publicPath, { maxAge: '1h' }));
 app.use('/socket.io', express.static(path.join(__dirname, 'node_modules', 'socket.io', 'client-dist')));
+// Dropzone.js static files
+app.use('/node_modules/dropzone/dist/min', express.static(path.join(__dirname, 'node_modules', 'dropzone', 'dist', 'min')));
 
 // Routes
 app.use('/api', apiRoutes);
@@ -132,6 +135,13 @@ async function start() {
 ╚═══════════════════════════════════════════════════════════╝
             `);
             
+            // Run database migration (idempotent)
+            migrateAll().then(() => {
+                logger.info('Database migration completed');
+            }).catch(err => {
+                logger.error(`Database migration failed: ${err.message}`);
+            });
+
             // Auto-connect sessions if configured
             sessionManager.autoConnectAll().catch(err => {
                 logger.warn(`Auto-connect failed: ${err.message}`);

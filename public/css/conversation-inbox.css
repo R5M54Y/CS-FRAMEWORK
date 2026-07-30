@@ -3,8 +3,6 @@
   display: flex;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem;
-  gap: 1.5rem;
   height: calc(100vh - 280px);
   min-height: 650px;
 }
@@ -587,21 +585,7 @@
 
 /* ==================== PERSONA TAB STYLES ==================== */
 .persona-panel {
-  max-width: 800px;
   margin: 0 auto;
-  padding: 2rem;
-}
-
-.persona-header {
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.persona-header h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 0.5rem;
 }
 
 .persona-subtitle {
@@ -660,21 +644,7 @@
 
 /* ==================== KNOWLEDGE TAB STYLES ==================== */
 .knowledge-panel {
-  max-width: 900px;
   margin: 0 auto;
-  padding: 2rem;
-}
-
-.knowledge-header {
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.knowledge-header h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 0.5rem;
 }
 
 .knowledge-subtitle {
@@ -940,6 +910,23 @@
 /* Scrollbar for chat list on mobile */
 @media (max-width: 640px) {
   .chat-list-container {
-    max-height: 350px;
+      max-height: 350px;
+    }
   }
-}
+
+  /* Gallery tab */
+  .gallery-panel {
+    padding: 20px;
+    background: var(--surface, #fff);
+    border-radius: var(--radius, 8px);
+    box-shadow: var(--shadow, 0 1px 3px rgba(0,0,0,0.08));
+  }
+  .gallery-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+  }
+  #gallery-grid {
+    margin-top: 20px;
+  }

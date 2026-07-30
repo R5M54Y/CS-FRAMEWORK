@@ -530,7 +530,7 @@ class MainController {
   async getConversations(req, res) {
     try {
       const { id } = req.params;
-      const result = sessionManager.getConversations(req.params.id);
+      const result = await sessionManager.getConversations(req.params.id);
       res.json(result);
     }
     catch (err) { res.status(500).json({ error: err.message }); }
@@ -539,7 +539,7 @@ class MainController {
   async getConversationMessages(req, res) {
     try {
       const { id, jid } = req.params;
-      const result = sessionManager.getConversationMessages(req.params.id, req.params.jid);
+      const result = await sessionManager.getConversationMessages(req.params.id, req.params.jid);
       res.json(result);
     }
     catch (err) { res.status(500).json({ error: err.message }); }
@@ -668,6 +668,53 @@ class MainController {
       res.json(result);
     }
     catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  // ===== GALLERY (Dropzone) =====
+
+  async listGalleryFiles(req, res) {
+    try {
+      const files = await sessionManager.listGalleryFiles(req.params.id);
+      res.json(files);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  async uploadGalleryFile(req, res) {
+    try {
+      const { id } = req.params;
+      const { parseUpload } = require('../utils/file-upload');
+      const uploadDir = path.join(
+        require('../config').sessionsPath,
+        id, 'gallery'
+      );
+      const files = await parseUpload(req, uploadDir, {
+        maxFileSize: 50 * 1024 * 1024,
+        allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
+      });
+      const results = [];
+      for (const file of files) {
+        const result = await sessionManager.uploadGalleryFile(id, file);
+        results.push(result);
+      }
+      res.json(results.length === 1 ? results[0] : results);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  async deleteGalleryFile(req, res) {
+    try {
+      const { id, fileId } = req.params;
+      const result = await sessionManager.deleteGalleryFile(id, fileId);
+      res.json({ success: result });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  async downloadGalleryFile(req, res) {
+    try {
+      const { id, fileId } = req.params;
+      const file = await sessionManager.getGalleryFile(id, fileId);
+      if (!file) return res.status(404).json({ error: 'File not found' });
+      res.download(file.diskPath, file.originalName);
+    } catch (err) { res.status(500).json({ error: err.message }); }
   }
 
 }

@@ -16,8 +16,10 @@ logs/*.json
 sessions/
 data/profiles/*.json
 data/personas/*.json
-data/sessions/*.json
 data/settings/*.json
+data/*.db
+data/*.db-shm
+data/*.db-wal
 
 # OS files
 .DS_Store

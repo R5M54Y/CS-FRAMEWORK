@@ -17,6 +17,7 @@ const {
 const config = require('../config');
 const { ProductManager, KnowledgeManager } = require('./storage');
 const { createSessionLogger } = require('../utils/logger');
+const messageRepo = require('./repositories/MessageRepository');
 
 /**
  * WhatsApp Session Manager
@@ -150,6 +151,8 @@ class Session extends EventEmitter {
           displayName: this.displayName
         });
         this.log.info(`Connected: ${this.phoneNumber} (${this.displayName})`);
+        // Warm message cache from SQLite
+        this._ensureCache().catch(err => this.log.warn(`Cache warm failed: ${err.message}`));
       }
 
       if (connection === 'close') {
@@ -259,8 +262,13 @@ class Session extends EventEmitter {
     }
     this.lastActivity = new Date();
 
-    // Save message to file
-    this._saveMessage(message);
+    // Persist to SQLite (single source of truth)
+    messageRepo.save({ ...message, session_id: this.id }).catch(err => {
+      this.log.error(`Failed to save incoming message to DB: ${err.message}`);
+    });
+
+    // [DEPRECATED] JSON file fallback — kept for rollback
+    // this._saveMessage(message);
 
     this.emit('message', message);
     this.log.info(`Message from ${message.isGroup ? 'group' : 'user'} ${user}: ${message.content.substring(0, 100)}`);
@@ -370,6 +378,23 @@ class Session extends EventEmitter {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  /**
+   * Ensure runtime cache is populated from SQLite.
+   * Called lazily when cache is empty and a read method needs data.
+   */
+  async _ensureCache(maxCount) {
+    const limit = maxCount || config.cacheWarmLimit || 500;
+    if (this.messages.length === 0) {
+      try {
+        const recent = await messageRepo.findRecent(this.id, limit);
+        this.messages = recent;
+        this.log.info(`Cache warmed: ${recent.length} messages from SQLite`);
+      } catch (err) {
+        this.log.error(`Failed to warm cache: ${err.message}`);
+      }
+    }
+  }
+
   _saveMessage(message) {
     try {
       const dataDir = path.join(config.sessionsPath, this.id, 'data');
@@ -424,7 +449,13 @@ class Session extends EventEmitter {
       if (this.messages.length > this.maxMessages) {
         this.messages.shift();
       }
-      this._saveMessage(outgoing);
+      // Persist outgoing to SQLite
+      messageRepo.save({ ...outgoing, session_id: this.id, isOutgoing: true }).catch(err => {
+        this.log.error(`Failed to save outgoing message to DB: ${err.message}`);
+      });
+
+      // [DEPRECATED] JSON — kept for rollback
+      // this._saveMessage(outgoing);
       this.emit('sent', outgoing);
 
       return sent;
@@ -545,45 +576,67 @@ class Session extends EventEmitter {
   }
 
   async getConversationMessages(participant, count = 50) {
-    // Filter messages for this participant
-    const messages = this.messages.filter(msg => {
-      const jid = msg.from || msg.to || '';
-      const participantJid = participant + '@s.whatsapp.net';
-      
-      // Match exact JID or phone number
-      return jid === participantJid || 
-             jid === participant || 
-             jid.split('@')[0] === participant;
-    });
-    
-    return messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    // Try cache first
+    if (this.messages.length > 0) {
+      const messages = this.messages.filter(msg => {
+        const jid = msg.from || msg.to || '';
+        const participantJid = participant + '@s.whatsapp.net';
+        return jid === participantJid || 
+               jid === participant || 
+               jid.split('@')[0] === participant;
+      });
+      if (messages.length > 0) {
+        return messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      }
+    }
+    // Fall back to SQLite
+    try {
+      return await messageRepo.findByChat(this.id, participant, count);
+    } catch (err) {
+      this.log.error(`getConversationMessages DB error: ${err.message}`);
+      return [];
+    }
   }
 
   async getConversations() {
-    // Build conversation list from messages
-    const participantMap = new Map();
-    
-    for (const msg of this.messages) {
-      if (msg.isOutgoing) continue; // Skip outgoing messages for conversation tracking
-      
-      const key = msg.user || msg.from || msg.to || `unknown`;
-      if (!participantMap.has(key)) {
-        participantMap.set(key, {
-          name: key,
-          avatar: null,
-          lastMessage: msg.content,
-          timestamp: msg.timestamp,
-          unread: 0,
-          botPausedBy: this.botPausedBy
-        });
+    // Try cache first
+    if (this.messages.length > 0) {
+      const participantMap = new Map();
+      for (const msg of this.messages) {
+        if (msg.isOutgoing) continue;
+        const key = msg.user || msg.from || msg.to || 'unknown';
+        if (!participantMap.has(key)) {
+          participantMap.set(key, {
+            name: key,
+            avatar: null,
+            lastMessage: msg.content,
+            timestamp: msg.timestamp,
+            unread: 0,
+            botPausedBy: this.botPausedBy
+          });
+        }
+      }
+      if (participantMap.size > 0) {
+        const result = Array.from(participantMap.values());
+        result.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        return result;
       }
     }
-    
-    // Convert to array and sort by timestamp (newest first)
-    const result = Array.from(participantMap.values());
-    result.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
-    return result;
+    // Fall back to SQLite
+    try {
+      const lastMessages = await messageRepo.lastMessagePerChat(this.id);
+      return lastMessages.map(msg => ({
+        name: msg.user || msg.chat_id,
+        avatar: null,
+        lastMessage: msg.content,
+        timestamp: msg.timestamp,
+        unread: 0,
+        botPausedBy: this.botPausedBy
+      }));
+    } catch (err) {
+      this.log.error(`getConversations DB error: ${err.message}`);
+      return [];
+    }
   }
 
   async getAvatar(jid) {
@@ -655,17 +708,24 @@ class Session extends EventEmitter {
     };
   }
 
-  getRecentMessages(count = 50) {
+  async getRecentMessages(count = 50) {
+    if (this.messages.length === 0) {
+      try {
+        return await messageRepo.findRecent(this.id, count);
+      } catch (err) {
+        this.log.error(`getRecentMessages DB error: ${err.message}`);
+        return [];
+      }
+    }
     return this.messages.slice(-count);
   }
 
   async getMessagesByDate(date) {
     const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0];
-    const file = path.join(config.sessionsPath, this.id, 'data', `messages-${dateStr}.json`);
-    if (!fs.existsSync(file)) return [];
     try {
-      return fs.readJsonSync(file);
-    } catch {
+      return await messageRepo.findByDate(this.id, dateStr);
+    } catch (err) {
+      this.log.error(`getMessagesByDate DB error: ${err.message}`);
       return [];
     }
   }

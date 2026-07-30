@@ -89,6 +89,9 @@ const config = {
     },
   },
 
+  // Message cache
+  cacheWarmLimit: parseInt(process.env.CACHE_WARM_LIMIT, 10) || 500,
+
   // Derived
   get isDev() { return this.nodeEnv === 'development'; },
   get isProd() { return this.nodeEnv === 'production'; }

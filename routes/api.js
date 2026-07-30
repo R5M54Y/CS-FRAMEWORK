@@ -89,4 +89,10 @@ router.put('/settings', controller.updateSettings);
 router.post('/ai/test', controller.testAIGateway);
 router.get('/ai/queue', controller.getAIQueueStats);
 
+// Gallery (Dropzone uploads)
+router.get('/session/:id/gallery', controller.listGalleryFiles);
+router.post('/session/:id/gallery', controller.uploadGalleryFile);
+router.delete('/session/:id/gallery/:fileId', controller.deleteGalleryFile);
+router.get('/session/:id/gallery/:fileId/download', controller.downloadGalleryFile);
+
 module.exports = router;

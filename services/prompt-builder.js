@@ -20,8 +20,8 @@ class PromptBuilder {
    * @param {string} params.userMessage - The incoming user message
    * @returns {Array} Messages array for chat completion
    */
-  build({ persona, profile, products, knowledge, history = [], userMessage }) {
-    const systemPrompt = this._buildSystemPrompt({ persona, profile, products, knowledge });
+  build({ persona, personaPrompt, profile, products, knowledge, knowledgeConfig, history = [], userMessage }) {
+    const systemPrompt = this._buildSystemPrompt({ persona, personaPrompt, profile, products, knowledge, knowledgeConfig });
     const messages = [{ role: 'system', content: systemPrompt }];
 
     // Add conversation history (last N exchanges to stay within context)
@@ -42,17 +42,22 @@ class PromptBuilder {
   /**
    * Build the system prompt from all context sources
    */
-  _buildSystemPrompt({ persona, profile, products, knowledge }) {
+  _buildSystemPrompt({ persona, personaPrompt, profile, products, knowledge, knowledgeConfig }) {
     // If persona has a custom prompt, use it as the primary system prompt
-    if (persona?.prompt) {
-      const parts = [persona.prompt];
-      
+    const effectivePersonaPrompt = personaPrompt || persona?.prompt;
+    if (effectivePersonaPrompt) {
+      const parts = [effectivePersonaPrompt];
+
+      // Knowledge base (from config)
+      const kbSection = this._sectionKnowledgeBase(knowledgeConfig);
+      if (kbSection) parts.push(kbSection);
+
       // Products
       if (products && products.length > 0) {
         parts.push(this._sectionProducts(products));
       }
 
-      // Knowledge base
+      // Knowledge base items
       if (knowledge && knowledge.length > 0) {
         parts.push(this._sectionKnowledge(knowledge));
       }
@@ -67,6 +72,10 @@ class PromptBuilder {
 
     // Legacy format fallback
     const parts = [];
+
+    // Knowledge base (from config)
+    const kbSection = this._sectionKnowledgeBase(knowledgeConfig);
+    if (kbSection) parts.push(kbSection);
 
     // Identity / Role
     parts.push(this._sectionIdentity(persona, profile));
@@ -159,6 +168,22 @@ class PromptBuilder {
       lines.push(line);
     }
     return lines.join('\n');
+  }
+
+  _sectionKnowledgeBase(knowledgeConfig) {
+    if (!knowledgeConfig) return null;
+    const parts = [];
+    if (knowledgeConfig.knowledge) {
+      parts.push('KNOWLEDGE BASE');
+      parts.push(knowledgeConfig.knowledge);
+    }
+    if (knowledgeConfig.marketplaceUrl) {
+      if (parts.length === 0) parts.push('KNOWLEDGE BASE');
+      if (parts.length === 1) parts.push('');
+      parts.push(`Marketplace: ${knowledgeConfig.marketplaceUrl}`);
+    }
+    if (parts.length === 0) return null;
+    return parts.join('\n');
   }
 
   _sectionRules(persona) {
