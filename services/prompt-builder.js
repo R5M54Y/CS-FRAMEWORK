@@ -6,7 +6,7 @@
  */
 class PromptBuilder {
   constructor() {
-    this.maxContextLength = 4000; // Approximate token-safe char limit for system prompt
+    this.maxContextLength = 15000; // Safe char limit for system prompt (persona + knowledge + products)
   }
 
   /**

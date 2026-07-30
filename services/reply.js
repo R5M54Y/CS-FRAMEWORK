@@ -49,7 +49,8 @@ class ReplyService {
 
     const profile = this.sessionManager.getProfile(sessionId);
     const persona = this.sessionManager.getPersona(sessionId);
-    const personaPrompt = this.sessionManager.getPersonaPrompt(sessionId);
+    const personaPromptData = this.sessionManager.getPersonaPrompt(sessionId);
+    const personaPrompt = (personaPromptData && typeof personaPromptData === 'object') ? personaPromptData.prompt || '' : personaPromptData || '';
     const products = this.sessionManager.getProducts(sessionId);
     const knowledge = this.sessionManager.getKnowledge(sessionId);
     const knowledgeConfig = this.sessionManager.getKnowledgeConfig(sessionId);
