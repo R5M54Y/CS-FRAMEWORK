@@ -7,6 +7,7 @@ const { createSessionLogger } = require('../utils/logger');
 const HumanizerService = require('../core/humanizer/HumanizerService');
 const messageRepo = require('../core/repositories/MessageRepository');
 const ActionParser = require('./ActionParser');
+const path = require('path');
 
 /**
  * ReplyService — orchestrates the full AI reply flow
@@ -124,7 +125,6 @@ class ReplyService {
 
   async _executeActions(sessionId, to, actions) {
     const fs = require('fs');
-    const path = require('path');
     const session = this.sessionManager.getSession(sessionId);
     if (!session || !session.sock) return;
 
