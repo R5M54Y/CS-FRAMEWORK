@@ -1,18 +1,16 @@
 'use strict';
 
 /**
- * DecorateStage — Stage 7 of the Humanizer pipeline.
+ * DecorateStage — Stage 8 of the Humanizer pipeline.
  *
  * Responsibilities:
- * - Apply emoji to section headers (using metadata from DetectSectionsStage)
- * - Apply emoji bullets to list items (using metadata from DetectListsStage + FormattingRulesRegistry)
- * - Apply themed emoji for prices and special blocks (using metadata from DetectSpecialBlocksStage)
- * - Never rewrite content, change wording, prices, URLs, or names
- * - Never modify already-formatted responses (skip if meta.alreadyFormatted)
+ * - Apply emoji to section headers (using category from SemanticAnalyzerStage)
+ * - Apply emoji bullets to list items (using category metadata)
+ * - All emoji lookups go through FormattingRulesRegistry by category only
  *
- * Contains NO hardcoded detection logic.
- * All detection comes from prior stages (DetectSections, DetectLists, DetectSpecialBlocks).
- * All emoji mappings come from FormattingRulesRegistry.
+ * Contains NO business vocabulary.
+ * Contains NO hardcoded emoji decisions.
+ * Contains NO regex pattern matching.
  */
 class DecorateStage {
   constructor({ registry, ...options } = {}) {
@@ -23,12 +21,12 @@ class DecorateStage {
   /** Emoji prefixes that indicate a line is already decorated */
   static EXISTING_EMOJI_PREFIXES = /^[📦✅💰🕒🚚⬇️⬆️✨🎁🛡️🏷️🎉👉💡⭐❓📝⚠️❌♾️🔗🧩📚📄🎥🖼️🔤🛒💬📞📱💳🏦📲👤🙋📧🃏👶♻️🏡]/u;
 
-  /** Number emoji for list numbering (kept for fallback but contextual icons preferred) */
+  /** Number emoji for list numbering (kept for fallback) */
   static NUMBER_EMOJIS = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
 
   /**
    * @param {string} text
-   * @param {Object} meta — from DetectSectionsStage, DetectListsStage, DetectSpecialBlocksStage
+   * @param {Object} meta — from prior stages, contains sections[], listItems[] with categories
    * @returns {{ text: string, meta: Object }}
    */
   process(text, meta = {}) {
@@ -39,7 +37,6 @@ class DecorateStage {
     const lines = text.split('\n');
     const result = [];
 
-    // Build lookup sets from metadata
     const sections = meta.sections || [];
     const listItems = meta.listItems || [];
     const specialBlocks = meta.specialBlocks || [];
@@ -54,23 +51,21 @@ class DecorateStage {
       const line = lines[i];
       const trimmed = line.trim();
 
-      // Preserve empty lines — reset list state
       if (!trimmed) {
         inList = false;
         result.push(line);
         continue;
       }
 
-      // Is this a known section header?
+      // Section headers — use category from SemanticAnalyzer
       const sectionInfo = sections.find(s => s.lineIndex === i);
       if (sectionInfo) {
-        // Add blank line BEFORE section header for spacing
         if (result.length > 0 && result[result.length - 1] !== '') {
           result.push('');
         }
-
-        if (sectionInfo.emoji) {
-          result.push(`${sectionInfo.emoji} ${sectionInfo.rawLine}`);
+        const emoji = this.registry ? this.registry.getSectionIcon(sectionInfo.category) : null;
+        if (emoji) {
+          result.push(`${emoji} ${sectionInfo.rawLine}`);
         } else {
           result.push(sectionInfo.rawLine);
         }
@@ -78,31 +73,26 @@ class DecorateStage {
         continue;
       }
 
-      // Is this a known list item?
+      // List items — use category from SemanticAnalyzer
       const listInfo = listItemMap.get(i);
       if (listInfo) {
         inList = true;
-
-        // Check special block metadata overlay
         const specialInfo = specialLineIndices.has(i) ? specialBlocks.find(s => s.lineIndex === i) : null;
+        const textToDecorate = listInfo.content;
 
+        // Priority: special block > category from analyzer
         let themedEmoji = null;
-        let textToDecorate = listInfo.content;
-
-        // Priority: special block type > registry item match
         if (specialInfo && specialInfo.type === 'price') {
           themedEmoji = '💰';
         } else if (this.registry) {
-          themedEmoji = this.registry.getItemIcon(textToDecorate);
+          themedEmoji = this.registry.getItemIcon(listInfo.category);
         }
 
-        // Numbered list items: prefer contextual icon, fallback to number emoji
+        // Numbered items: contextual icon preferred
         if (listInfo.isNumbered) {
-          // Try contextual icon first (from registry item matching)
           if (themedEmoji) {
             result.push(`${themedEmoji} ${textToDecorate}`);
           } else if (listInfo.numberIndex >= 0 && listInfo.numberIndex < DecorateStage.NUMBER_EMOJIS.length) {
-            // Fallback: use number emoji for order-important steps
             result.push(`${DecorateStage.NUMBER_EMOJIS[listInfo.numberIndex]} ${textToDecorate}`);
           } else {
             result.push(`✅ ${textToDecorate}`);
@@ -115,7 +105,7 @@ class DecorateStage {
         continue;
       }
 
-      // Is this a special block (price line not in list)?
+      // Special blocks (prices, URLs not in lists)
       const specialInfo = specialLineIndices.has(i) ? specialBlocks.find(s => s.lineIndex === i) : null;
       if (specialInfo) {
         inList = false;
@@ -129,7 +119,6 @@ class DecorateStage {
         continue;
       }
 
-      // Default: pass through unchanged
       inList = false;
       result.push(line);
     }

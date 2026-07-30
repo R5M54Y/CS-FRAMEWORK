@@ -14,9 +14,8 @@
  * Does NOT make spacing decisions.
  */
 class DetectListsStage {
-  constructor({ registry, ...options } = {}) {
+  constructor(options = {}) {
     this.name = 'DetectListsStage';
-    this.registry = registry;
   }
 
   /** Regex to detect markdown bullet at line start */

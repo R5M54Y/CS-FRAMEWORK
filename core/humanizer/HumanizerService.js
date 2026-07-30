@@ -15,6 +15,7 @@ const {
   DetectStructureStage,
   DetectListsStage,
   DetectSpecialBlocksStage,
+  SemanticAnalyzerStage,
   DecorateStage,
   ImproveSpacingStage,
   SemanticChunkStage,
@@ -69,10 +70,11 @@ class HumanizerService {
       new NormalizeStage(),
       new RemoveMarkdownStage(),
       new DetectFormattingStage({ registry: this.registry }),
-      new DetectSectionsStage({ registry: this.registry }),
+      new DetectSectionsStage(),
       new DetectStructureStage(),
-      new DetectListsStage({ registry: this.registry }),
+      new DetectListsStage(),
       new DetectSpecialBlocksStage(),
+      new SemanticAnalyzerStage(),
       new DecorateStage({ registry: this.registry }),
       new SemanticChunkStage(),
       new ImproveSpacingStage(),
@@ -260,7 +262,7 @@ class HumanizerService {
     let result = { text, meta: {} };
 
     // Run each stage in sequence. Each stage receives the previous stage's output.
-    // Stages: Normalize → RemoveMarkdown → DetectFormatting → DetectSections → DetectStructure → DetectLists → DetectSpecialBlocks → Decorate → ImproveSpacing → SemanticChunk → SplitLongMessages → FinalNormalize
+    // Stages: Normalize → RemoveMarkdown → DetectFormatting → DetectSections → DetectStructure → DetectLists → DetectSpecialBlocks → SemanticAnalyzer → Decorate → SemanticChunk → ImproveSpacing → SplitLongMessages → FinalNormalize
     for (const stage of this._stages) {
       // DetectFormattingStage sets meta.alreadyFormatted — short-circuit after it
       if (result.meta.alreadyFormatted && stage.name !== 'NormalizeStage' && stage.name !== 'DetectFormattingStage') {
