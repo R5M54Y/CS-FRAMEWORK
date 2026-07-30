@@ -48,6 +48,9 @@ class PromptBuilder {
     if (effectivePersonaPrompt) {
       const parts = [effectivePersonaPrompt];
 
+      // WhatsApp messaging format standards
+      parts.push(this._sectionFormatting());
+
       // Knowledge base (from config)
       const kbSection = this._sectionKnowledgeBase(knowledgeConfig);
       if (kbSection) parts.push(kbSection);
@@ -82,6 +85,9 @@ class PromptBuilder {
 
     // Communication style
     parts.push(this._sectionStyle(persona));
+
+    // WhatsApp messaging format standards
+    parts.push(this._sectionFormatting());
 
     // Products
     if (products && products.length > 0) {
@@ -148,7 +154,7 @@ class PromptBuilder {
   _sectionProducts(products) {
     const lines = ['Katalog Produk:'];
     for (const p of products.slice(0, 30)) {
-      let line = `- ${p.name}`;
+      let line = `📦 ${p.name}`;
       if (p.price) line += ` | Rp ${p.price.toLocaleString('id-ID')}`;
       if (p.stock !== undefined) line += ` | Stok: ${p.stock}`;
       if (p.description) line += ` | ${p.description}`;
@@ -184,6 +190,76 @@ class PromptBuilder {
     }
     if (parts.length === 0) return null;
     return parts.join('\n');
+  }
+
+  _sectionFormatting() {
+    return [
+      'FORMAT PESAN WHATSAPP:',
+      '',
+      'Tulis seperti customer service manusia, bukan robot.',
+      'Gunakan bahasa yang natural dan mengalir.',
+      '',
+      'CONTOH FORMAT PRODUK:',
+      '📦 Kucing Persia - Rp 500.000',
+      '📦 Kucing Anggora - Rp 750.000',
+      '📦 Kucing Maine Coon - Rp 1.200.000',
+      '',
+      'CONTOH FORMAT FITUR:',
+      '✅ Produk Original',
+      '✅ Pengiriman Cepat',
+      '✅ Garansi 30 Hari',
+      '',
+      'CONTOH FORMAT JADWAL:',
+      '🕒 Senin-Jumat: 09:00-17:00',
+      '🕒 Sabtu: 09:00-13:00',
+      '🕒 Minggu: Libur',
+      '',
+      'CONTOH FORMAT HARGA:',
+      '💰 Paket A: Rp 50.000',
+      '💰 Paket B: Rp 100.000',
+      '',
+      'CONTOH FORMAT KONTAK:',
+      '📱 WhatsApp: 0812-xxxx-xxxx',
+      '🌐 Website: tokokucing.com',
+      '',
+      'ATURAN LIST:',
+      'WAJIB gunakan emoji untuk setiap item dalam daftar.',
+      'Jangan gunakan: angka (1. 2. 3.), strip (-), asterisk (*), atau bullet (•).',
+      '',
+      'PANDUAN EMOJI PER KONTEKS:',
+      'Produk → 📦',
+      'Fitur/Keunggulan → ✅ ✨',
+      'Harga → 💰',
+      'Waktu/Jadwal → 🕒',
+      'Pengiriman → 🚚',
+      'Download → 📥',
+      'Dokumen → 📄 📝',
+      'Kontak → 📱',
+      'Peringatan → ⚠️ ❗',
+      'Catatan → 📌',
+      '',
+      'ATURAN NOMOR:',
+      'Hanya gunakan nomor urut jika customer meminta langkah-langkah atau prosedur berurutan.',
+      'Untuk daftar biasa, WAJIB gunakan emoji.',
+      '',
+      'ATURAN EMOJI:',
+      'WAJIB: Satu emoji di awal setiap item list.',
+      'WAJIB: Pilih emoji yang sesuai konteks.',
+      'DILARANG: Menumpuk emoji (contoh salah: 📦✅✨).',
+      'DILARANG: Menghias setiap kalimat dengan emoji.',
+      'Gunakan emoji hanya untuk memperjelas struktur, bukan menghias.',
+      '',
+      'ATURAN FORMAT:',
+      'DILARANG: markdown (##, **, __, ---, tabel, code block).',
+      'WAJIB: Teks WhatsApp polos.',
+      'DILARANG: Blok teks panjang tanpa jeda.',
+      '',
+      'STRUKTUR:',
+      'Paragraf pendek (1-3 baris).',
+      'Antar paragraf beri jarak (baris kosong).',
+      'Mudah dipindai (scanable).',
+      'Alami, seperti orang ngobrol di WhatsApp.',
+    ].join('\n');
   }
 
   _sectionRules(persona) {
