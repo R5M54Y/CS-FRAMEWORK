@@ -6,6 +6,7 @@ const { createQueue, getQueue } = require('./ai-queue');
 const { createSessionLogger } = require('../utils/logger');
 const HumanizerService = require('../core/humanizer/HumanizerService');
 const messageRepo = require('../core/repositories/MessageRepository');
+const ActionParser = require('./ActionParser');
 
 /**
  * ReplyService — orchestrates the full AI reply flow
@@ -79,13 +80,23 @@ class ReplyService {
       });
 
       if (response && !response.startsWith('[')) {
-        // HUMANIZER INTEGRATION: Send through Humanizer instead of direct session.sendMessage
-        await this.humanizer.send({
-          sessionId,
-          to: from,
-          text: response,
-          options: {}
-        });
+        // Parse for action blocks (e.g. <action type="send_gallery">)
+        const { actions, text: cleanText } = ActionParser.parse(response);
+
+        // Execute actions before sending text
+        if (actions.length > 0) {
+          await this._executeActions(sessionId, from, actions);
+        }
+
+        // Send remaining text through Humanizer (if any)
+        if (cleanText) {
+          await this.humanizer.send({
+            sessionId,
+            to: from,
+            text: cleanText,
+            options: {}
+          });
+        }
         this.log.info(`AI reply sent via Humanizer to ${from}`);
       } else {
         this.log.warn(`AI error response: ${response}`);
@@ -109,6 +120,41 @@ class ReplyService {
    */
   setQueueConcurrency(concurrency) {
     this.queue.setConcurrency(concurrency);
+  }
+
+  async _executeActions(sessionId, to, actions) {
+    const fs = require('fs');
+    const path = require('path');
+    const session = this.sessionManager.getSession(sessionId);
+    if (!session || !session.sock) return;
+
+    for (const action of actions) {
+      if (action.type === 'send_gallery') {
+        await this._sendGallery(session, sessionId, to, action);
+      }
+    }
+  }
+
+  async _sendGallery(session, sessionId, to, action) {
+    const config = require('../config');
+    const files = this.sessionManager.listGalleryFiles(sessionId);
+    if (!files || files.length === 0) return;
+
+    const count = Math.min(action.count, files.length);
+    const selected = files.slice(0, count);
+
+    for (let i = 0; i < selected.length; i++) {
+      const file = selected[i];
+      const filePath = path.join(config.sessionsPath, sessionId, 'gallery', file.filename);
+      if (!require('fs').existsSync(filePath)) continue;
+
+      const caption = i === 0 ? (action.caption || '') : '';
+      try {
+        await session.sendImage(to, `http://localhost:${config.port}/api/session/${sessionId}/gallery/${file.id}/download`, caption);
+      } catch (err) {
+        this.log.error(`Gallery send error: ${err.message}`);
+      }
+    }
   }
 
   async _fallback(session, to, persona) {
