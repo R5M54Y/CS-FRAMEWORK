@@ -44,6 +44,7 @@ class FormattingRulesRegistry {
         sectionPatterns: [/^pembayaran/i, /^pembayar/i],
         itemPatterns: [
           /^(qris|transfer|bank|bca|bni|mandiri|bri|gopay|ovo|dana|shopeepay|linkaja)/i,
+          /^bayar\b/i,
         ],
         sectionIcon: '💳',
         itemIcon: '💳',
@@ -82,7 +83,7 @@ class FormattingRulesRegistry {
       // === PRODUCT ===
       {
         id: 'product',
-        sectionPatterns: [/^produk/i, /^product/i, /^katalog/i, /^item\b/i],
+        sectionPatterns: [/^produk/i, /^product/i, /^katalog/i, /^item\b/i, /^is(i|inya)\b/i, /^inti\b/i, /^daftar\b/i, /^rincian/i, /^detail\s+produk/i],
         itemPatterns: [/^(product|produk|item|paket|bundling)/i],
         sectionIcon: '📦',
         itemIcon: '📦',
@@ -122,7 +123,10 @@ class FormattingRulesRegistry {
       // === ORDER / STEPS ===
       {
         id: 'steps',
-        sectionPatterns: [/^langkah/i, /^cara/i, /^tutorial/i, /^step/i],
+        sectionPatterns: [/^langkah/i, /^cara/i, /^tutorial/i, /^step/i, /^order/i, /^pesan/i, /^beli/i],
+        itemPatterns: [
+          /^(pilih|klik|kunjungi|buka|masuk|login|daftar|isi|submit|konfirmasi)/i,
+        ],
         sectionIcon: '👉',
         itemIcon: '👉',
         priority: 100,
@@ -222,6 +226,26 @@ class FormattingRulesRegistry {
         priority: 100,
       },
 
+      // === EMAIL ===
+      {
+        id: 'email',
+        sectionPatterns: [/^email/i, /^e-?mail/i],
+        itemPatterns: [/^(email|e-?mail|cek\s*email|inbox)/i],
+        sectionIcon: '📧',
+        itemIcon: '📧',
+        priority: 100,
+      },
+
+      // === LINK / KLIK ===
+      {
+        id: 'link_click',
+        sectionPatterns: [/^link/i, /^url/i],
+        itemPatterns: [/^(klik|click|link\s|buka\s*link|kunjungi)/i],
+        sectionIcon: '🔗',
+        itemIcon: '🔗',
+        priority: 100,
+      },
+
       // === CUSTOMER / ADMIN ===
       {
         id: 'customer',
@@ -272,26 +296,51 @@ class FormattingRulesRegistry {
       // === EDUCATION / KIDS ===
       {
         id: 'education',
-        sectionPatterns: [/^pendidikan/i, /^edukasi/i, /^belajar/i, /^worksheet/i],
+        sectionPatterns: [/^pendidikan/i, /^edukasi/i, /^belajar/i, /^worksheet/i, /^materi/i],
+        itemPatterns: [
+          /^(worksheet|printable|lembar\s*kerja|modul|bahan\s*ajar)/i,
+        ],
         sectionIcon: '📚',
+        itemIcon: '📄',
         priority: 100,
       },
       {
         id: 'material',
         sectionPatterns: [/^materi/i, /^bahan ajar/i],
         sectionIcon: '📄',
+        itemIcon: '📄',
         priority: 100,
       },
       {
         id: 'kids',
-        sectionPatterns: [/^anak/i, /^kids/i, /^children/i],
+        sectionPatterns: [/^anak/i, /^kids/i, /^children/i, /^usia/i, /^balita/i],
+        itemPatterns: [/^(anak|kids|usia|umur|baby|balita|bayi)/i],
         sectionIcon: '🧩',
+        itemIcon: '👶',
         priority: 100,
       },
       {
         id: 'flashcard',
-        sectionPatterns: [/^flashcard/i, /^kartu/i],
-        sectionIcon: '🔤',
+        sectionPatterns: [/^flashcard/i, /^kartu/i, /^flash\s*card/i],
+        itemPatterns: [/^(flashcard|kartu|flash\s*card)/i],
+        sectionIcon: '🃏',
+        itemIcon: '🃏',
+        priority: 100,
+      },
+      {
+        id: 'homeschool',
+        sectionPatterns: [/^homeschool/i, /^home.?school/i, /^belajar.?di.?rumah/i],
+        itemPatterns: [/^(homeschool|home.?school|belajar.?di.?rumah)/i],
+        sectionIcon: '🏡',
+        itemIcon: '🏡',
+        priority: 100,
+      },
+      {
+        id: 'resell',
+        sectionPatterns: [/^resell/i, /^jual.?kembali/i, /^bisnis/i],
+        itemPatterns: [/^(resell|jual\s*kembali|dijual\s*kembali|bisnis|reseller)/i],
+        sectionIcon: '♻️',
+        itemIcon: '♻️',
         priority: 100,
       },
 

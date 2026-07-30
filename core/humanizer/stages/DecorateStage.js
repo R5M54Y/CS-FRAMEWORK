@@ -21,9 +21,9 @@ class DecorateStage {
   }
 
   /** Emoji prefixes that indicate a line is already decorated */
-  static EXISTING_EMOJI_PREFIXES = /^[📦✅💰🕒🚚⬇️⬆️✨🎁🛡️🏷️🎉👉💡⭐❓📝⚠️❌♾️🔗🧩📚📄🎥🖼️🔤🛒💬📞📱💳🏦📲👤🙋]/;
+  static EXISTING_EMOJI_PREFIXES = /^[📦✅💰🕒🚚⬇️⬆️✨🎁🛡️🏷️🎉👉💡⭐❓📝⚠️❌♾️🔗🧩📚📄🎥🖼️🔤🛒💬📞📱💳🏦📲👤🙋📧🃏👶♻️🏡]/u;
 
-  /** Number emoji for list numbering */
+  /** Number emoji for list numbering (kept for fallback but contextual icons preferred) */
   static NUMBER_EMOJIS = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
 
   /**
@@ -96,9 +96,17 @@ class DecorateStage {
           themedEmoji = this.registry.getItemIcon(textToDecorate);
         }
 
-        // Numbered list items get number emoji
-        if (listInfo.isNumbered && listInfo.numberIndex >= 0 && listInfo.numberIndex < DecorateStage.NUMBER_EMOJIS.length) {
-          result.push(`${DecorateStage.NUMBER_EMOJIS[listInfo.numberIndex]} ${textToDecorate}`);
+        // Numbered list items: prefer contextual icon, fallback to number emoji
+        if (listInfo.isNumbered) {
+          // Try contextual icon first (from registry item matching)
+          if (themedEmoji) {
+            result.push(`${themedEmoji} ${textToDecorate}`);
+          } else if (listInfo.numberIndex >= 0 && listInfo.numberIndex < DecorateStage.NUMBER_EMOJIS.length) {
+            // Fallback: use number emoji for order-important steps
+            result.push(`${DecorateStage.NUMBER_EMOJIS[listInfo.numberIndex]} ${textToDecorate}`);
+          } else {
+            result.push(`✅ ${textToDecorate}`);
+          }
         } else if (themedEmoji) {
           result.push(`${themedEmoji} ${textToDecorate}`);
         } else {
