@@ -48,6 +48,9 @@ class PromptBuilder {
     if (effectivePersonaPrompt) {
       const parts = [effectivePersonaPrompt];
 
+      // WhatsApp formatting rules
+      parts.push(this._sectionFormatting());
+
       // Knowledge base (from config)
       const kbSection = this._sectionKnowledgeBase(knowledgeConfig);
       if (kbSection) parts.push(kbSection);
@@ -82,6 +85,9 @@ class PromptBuilder {
 
     // Communication style
     parts.push(this._sectionStyle(persona));
+
+    // WhatsApp formatting rules
+    parts.push(this._sectionFormatting());
 
     // Products
     if (products && products.length > 0) {
@@ -208,6 +214,66 @@ class PromptBuilder {
     }
 
     return parts.join('\n');
+  }
+
+  _sectionFormatting() {
+    return [
+      'FORMAT PESAN WHATSAPP:',
+      '',
+      'Tulis dalam format WhatsApp yang bersih, alami, dan mudah dipindai.',
+      '',
+      'ATURAN LIST:',
+      '- JANGAN gunakan tanda "-" atau "*" untuk membuat daftar.',
+      '- JANGAN gunakan daftar bernomor (1. 2. 3.) kecuali urutannya benar-benar penting.',
+      '- SETIAP item dalam daftar HARUS menggunakan ikon yang sesuai dengan maknanya.',
+      '',
+      'IKON UNTUK ITEM:',
+      '📦 produk, paket, item',
+      '📄 worksheet, printable, materi',
+      '🧩 puzzle, permainan',
+      '🎥 video, tutorial',
+      '🎨 coloring, mewarnai, gambar',
+      '🎁 bonus, hadiah, gratis',
+      '💰 harga, rp, biaya, total',
+      '🏷️ promo, diskon, hemat, murah',
+      '✨ keunggulan, kelebihan, fitur, benefit',
+      '💳 pembayaran, transfer, qris, bayar',
+      '📧 email, e-mail',
+      '🔗 link, url, website',
+      '📱 whatsapp, kontak, telepon, wa',
+      '👶 usia, anak, balita',
+      '📚 belajar, pendidikan, materi',
+      '🏠 homeschool, belajar di rumah',
+      '♻️ resell, jual kembali, bisnis',
+      '⬇️ download, unduh',
+      '🖨️ print, cetak',
+      '🔑 akses, lifetime, selamanya',
+      '⚡ instan, cepat, langsung',
+      '👉 langkah, cara, klik, pilih',
+      'ℹ️ info, informasi, keterangan',
+      '📝 catatan, penting, perhatian',
+      '✅ (default jika tidak ada ikon yang cocok)',
+      '',
+      'CONTOH:',
+      '✅ Daripada: "- Worksheet Tracing"',
+      '✅ Tulis: "📄 Worksheet Tracing"',
+      '',
+      '✅ Daripada: "1. Klik link 2. Bayar 3. Download"',
+      '✅ Tulis: "👉 Klik link pembelian\\n\\n💳 Lakukan pembayaran\\n\\n⬇️ Download file"',
+      '',
+      'UNTUK HEADER SECTION:',
+      'Gunakan ikon sebelum judul section.',
+      'Contoh: "📦 Produk:", "💰 Harga:", "✨ Keunggulan:", "👉 Cara Order:"',
+      '',
+      'ATURAN TAMBAHAN:',
+      '- Jangan gunakan markdown (** **, * *, __ __, #, >).',
+      '- Jangan gunakan tanda kutip atau backtick untuk formatting.',
+      '- Pisahkan antar section dengan satu baris kosong.',
+      '- Jangan menulis dinding teks yang panjang.',
+      '',
+      'PENTING:',
+      'Ini hanya aturan formatting. Jangan mengubah fakta, harga, URL, nama produk, atau aturan bisnis.',
+    ].join('\n');
   }
 }
 
