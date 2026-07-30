@@ -253,6 +253,15 @@ class MessageRepository {
     return result ? result.changes : 0;
   }
 
+  /**
+   * Delete messages for a specific chat within a session.
+   * Other conversations remain untouched.
+   */
+  async clearChat(sessionId, chatId) {
+    const result = await db.run('DELETE FROM ' + TABLE + ' WHERE session_id = ? AND chat_id = ?', [sessionId, chatId]);
+    return result ? result.changes : 0;
+  }
+
   // ===== HELPERS =====
 
   _deriveChatId(msg) {

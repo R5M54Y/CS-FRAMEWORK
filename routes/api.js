@@ -36,6 +36,7 @@ router.get('/session/:id/conversations', controller.getConversations);
 router.get('/session/:id/conversations/:jid/messages', controller.getConversationMessages);
 router.get('/session/:id/conversations/status', controller.getConversationStatus);
 router.post('/session/:id/conversations/reply', controller.sendHumanReply);
+router.delete('/session/:id/conversations/:chatId/messages', controller.clearChatMessages);
 router.get('/session/:id/conversations/:jid/avatar', controller.getAvatar);
 
 // Bot Control

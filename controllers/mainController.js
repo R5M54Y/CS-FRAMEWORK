@@ -65,6 +65,7 @@ class MainController {
     this.getConversationMessages = this.getConversationMessages.bind(this);
     this.getConversationStatus = this.getConversationStatus.bind(this);
     this.sendHumanReply = this.sendHumanReply.bind(this);
+    this.clearChatMessages = this.clearChatMessages.bind(this);
     this.getAvatar = this.getAvatar.bind(this);
     
     // Bot Control
@@ -584,7 +585,19 @@ class MainController {
     }
     catch (err) { res.status(500).json({ error: err.message }); }
   }
-  
+
+  async clearChatMessages(req, res) {
+    try {
+      const { id, chatId } = req.params;
+      const session = sessionManager.getSession(id);
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+      const messageRepo = require('../core/repositories/MessageRepository');
+      const deleted = await messageRepo.clearChat(id, chatId);
+      res.json({ success: true, deleted });
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
   async getAvatar(req, res) {
     try {
       const { id, jid } = req.params;

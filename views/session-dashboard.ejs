@@ -125,6 +125,7 @@
                                 <span class="bot-label" id="bot-label">BOT ACTIVE</span>
                                 <span class="bot-status-dot active" id="bot-status-dot"></span>
                             </div>
+                            <button class="btn btn-sm btn-outline btn-danger" id="clear-chat-btn" onclick="clearConversation()" title="Clear this conversation" style="display:none;">🗑</button>
                         </div>
                     </div>
                     <div class="messages-container" id="messages-container">
@@ -493,6 +494,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!initialConnected && initialState !== 'connected') {
         loadQR();
     }
+    
+    // Auto-load conversations from SQLite on page load
+    loadConversations().then(() => {
+        // Auto-select the newest conversation
+        const firstChat = document.querySelector('.chat-item');
+        if (firstChat) {
+            selectConversation(firstChat.dataset.participant);
+        }
+    });
 });
 
 // Socket events
@@ -601,6 +611,10 @@ async function selectConversation(participant) {
     
     document.getElementById('participant-name').textContent = participant;
     document.getElementById('participant-avatar').textContent = participant ? participant.charAt(0).toUpperCase() : '👤';
+    
+    // Show clear chat button when conversation is selected
+    const clearBtn = document.getElementById('clear-chat-btn');
+    if (clearBtn) clearBtn.style.display = 'inline-flex';
     
     const messagesContainer = document.getElementById('messages-container');
     if (messagesContainer) {
@@ -792,6 +806,54 @@ async function sendMessage(e) {
         sendButton.innerHTML = '📨';
     }
 }
+
+// === CLEAR CHAT ===
+async function clearConversation() {
+    if (!selectedParticipant) return;
+    if (!confirm('Clear all conversation history with ' + selectedParticipant + '? This action cannot be undone.')) return;
+    try {
+        const res = await fetch('/api/session/' + sessionId + '/conversations/' + encodeURIComponent(selectedParticipant) + '/messages', { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            // Remove this conversation from list
+            document.querySelectorAll('.chat-item').forEach(item => {
+                if (item.dataset.participant === selectedParticipant) item.remove();
+            });
+            // Clear message panel
+            document.getElementById('messages-container').innerHTML = '<div class="empty-state"><div class="empty-state-icon">💬</div><h3>No Messages</h3><p>Conversation cleared</p></div>';
+            // Hide clear button
+            const clearBtn = document.getElementById('clear-chat-btn');
+            if (clearBtn) clearBtn.style.display = 'none';
+            // Auto-select next conversation if exists
+            const firstChat = document.querySelector('.chat-item');
+            if (firstChat) {
+                selectConversation(firstChat.dataset.participant);
+            } else {
+                selectedParticipant = null;
+                document.getElementById('participant-name').textContent = 'Select a conversation';
+                document.getElementById('reply-textarea').disabled = true;
+                document.getElementById('send-button').disabled = true;
+            }
+            showToast('Chat cleared: ' + data.deleted + ' messages deleted', 'success');
+        } else {
+            showToast('Failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (e) {
+        showToast('Failed to clear chat: ' + e.message, 'error');
+    }
+}
+
+// Socket: listen for chat-cleared
+socket.on('session:chat-cleared', (data) => {
+    if (data.sessionId === sessionId && selectedParticipant === data.chatId) {
+        document.querySelectorAll('.chat-item').forEach(item => {
+            if (item.dataset.participant === data.chatId) item.remove();
+        });
+        document.getElementById('messages-container').innerHTML = '<div class="empty-state"><div class="empty-state-icon">💬</div><h3>No Messages</h3><p>Conversation cleared</p></div>';
+        const firstChat = document.querySelector('.chat-item');
+        if (firstChat) selectConversation(firstChat.dataset.participant);
+    }
+});
 
 // === PERSONA TAB ===
 async function loadPersona() {
