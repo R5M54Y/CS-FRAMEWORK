@@ -136,23 +136,44 @@ class ReplyService {
   }
 
   async _sendGallery(session, sessionId, to, action) {
+    const fs = require('fs');
+    const path = require('path');
     const config = require('../config');
     const files = this.sessionManager.listGalleryFiles(sessionId);
     if (!files || files.length === 0) return;
 
-    const count = Math.min(action.count, files.length);
-    const selected = files.slice(0, count);
+    // Random selection: max 4 for album, or all if <= 4
+    const maxCount = 4;
+    const count = Math.min(action.count || 1, files.length, maxCount);
+    const shuffled = [...files].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, count);
 
-    for (let i = 0; i < selected.length; i++) {
-      const file = selected[i];
-      const filePath = path.join(config.sessionsPath, sessionId, 'gallery', file.filename);
-      if (!require('fs').existsSync(filePath)) continue;
+    // Send first image via session.sendImage to get message key & persist
+    const first = selected[0];
+    const firstUrl = `http://localhost:${config.port}/api/session/${sessionId}/gallery/${first.id}/download`;
+    const caption = action.caption || '';
+    let firstMsg;
+    try {
+      firstMsg = await session.sendImage(to, firstUrl, caption);
+    } catch (err) {
+      this.log.error(`Gallery first image send error: ${err.message}`);
+      return;
+    }
+    if (!firstMsg || !firstMsg.key) return;
 
-      const caption = i === 0 ? (action.caption || '') : '';
-      try {
-        await session.sendImage(to, `http://localhost:${config.port}/api/session/${sessionId}/gallery/${file.id}/download`, caption);
-      } catch (err) {
-        this.log.error(`Gallery send error: ${err.message}`);
+    // Remaining images → send as album via sock.sendMessage with albumParentKey
+    if (selected.length > 1) {
+      const remaining = selected.slice(1);
+      for (const file of remaining) {
+        const fileUrl = `http://localhost:${config.port}/api/session/${sessionId}/gallery/${file.id}/download`;
+        try {
+          await session.sock.sendMessage(to, {
+            image: { url: fileUrl },
+            albumParentKey: firstMsg.key
+          }, {});
+        } catch (err) {
+          this.log.error(`Gallery album image send error: ${err.message}`);
+        }
       }
     }
   }
