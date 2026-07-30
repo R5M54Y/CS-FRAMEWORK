@@ -9,11 +9,16 @@ const PresenceManager = require('./PresenceManager');
 const MessageSplitter = require('./MessageSplitter');
 const {
   NormalizeStage,
+  RemoveMarkdownStage,
   DetectFormattingStage,
   DetectSectionsStage,
   DetectStructureStage,
+  DetectListsStage,
+  DetectSpecialBlocksStage,
   DecorateStage,
-  SpacingStage,
+  ImproveSpacingStage,
+  SplitLongMessagesStage,
+  FinalNormalizeStage,
 } = require('./stages');
 const FormattingRulesRegistry = require('./FormattingRulesRegistry');
 
@@ -61,11 +66,16 @@ class HumanizerService {
     this.registry = new FormattingRulesRegistry();
     this._stages = [
       new NormalizeStage(),
+      new RemoveMarkdownStage(),
       new DetectFormattingStage({ registry: this.registry }),
       new DetectSectionsStage({ registry: this.registry }),
       new DetectStructureStage(),
+      new DetectListsStage({ registry: this.registry }),
+      new DetectSpecialBlocksStage(),
       new DecorateStage({ registry: this.registry }),
-      new SpacingStage(),
+      new ImproveSpacingStage(),
+      new SplitLongMessagesStage(),
+      new FinalNormalizeStage(),
     ];
 
     this.log.info(`Humanizer initialized (enabled=${this.config.enabled})`);
@@ -240,7 +250,7 @@ class HumanizerService {
     let result = { text, meta: {} };
 
     // Run each stage in sequence. Each stage receives the previous stage's output.
-    // Stages are: Normalize → DetectFormatting → DetectSections → DetectStructure → Decorate → Spacing
+    // Stages: Normalize → RemoveMarkdown → DetectFormatting → DetectSections → DetectStructure → DetectLists → DetectSpecialBlocks → Decorate → ImproveSpacing → SplitLongMessages → FinalNormalize
     for (const stage of this._stages) {
       // DetectFormattingStage sets meta.alreadyFormatted — short-circuit after it
       if (result.meta.alreadyFormatted && stage.name !== 'NormalizeStage' && stage.name !== 'DetectFormattingStage') {

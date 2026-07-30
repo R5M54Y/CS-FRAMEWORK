@@ -1,17 +1,27 @@
 'use strict';
 
 const NormalizeStage = require('./NormalizeStage');
+const RemoveMarkdownStage = require('./RemoveMarkdownStage');
 const DetectFormattingStage = require('./DetectFormattingStage');
 const DetectSectionsStage = require('./DetectSectionsStage');
 const DetectStructureStage = require('./DetectStructureStage');
+const DetectListsStage = require('./DetectListsStage');
+const DetectSpecialBlocksStage = require('./DetectSpecialBlocksStage');
 const DecorateStage = require('./DecorateStage');
-const SpacingStage = require('./SpacingStage');
+const ImproveSpacingStage = require('./ImproveSpacingStage');
+const SplitLongMessagesStage = require('./SplitLongMessagesStage');
+const FinalNormalizeStage = require('./FinalNormalizeStage');
 
 module.exports = {
   NormalizeStage,
+  RemoveMarkdownStage,
   DetectFormattingStage,
   DetectSectionsStage,
   DetectStructureStage,
+  DetectListsStage,
+  DetectSpecialBlocksStage,
   DecorateStage,
-  SpacingStage,
+  ImproveSpacingStage,
+  SplitLongMessagesStage,
+  FinalNormalizeStage,
 };
