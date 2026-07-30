@@ -27,6 +27,7 @@ class MainController {
     this.disconnectSession = this.disconnectSession.bind(this);
     this.reconnectSession = this.reconnectSession.bind(this);
     this.restartSession = this.restartSession.bind(this);
+    this.duplicateSession = this.duplicateSession.bind(this);
     this.getQRCode = this.getQRCode.bind(this);
     this.regenerateQR = this.regenerateQR.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
@@ -225,6 +226,14 @@ class MainController {
   async restartSession(req, res) {
     try {
       const result = await sessionManager.restartSession(req.params.id);
+      res.json(result);
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
+  async duplicateSession(req, res) {
+    try {
+      const result = sessionManager.duplicateSession(req.params.id);
       res.json(result);
     }
     catch (err) { res.status(500).json({ error: err.message }); }

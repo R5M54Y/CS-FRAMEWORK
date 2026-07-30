@@ -21,6 +21,7 @@ router.post('/session/:id/connect', controller.connectSession);
 router.post('/session/:id/disconnect', controller.disconnectSession);
 router.post('/session/:id/reconnect', controller.reconnectSession);
 router.post('/session/:id/restart', controller.restartSession);
+router.post('/session/:id/duplicate', controller.duplicateSession);
 router.get('/session/:id/qrcode', controller.getQRCode);
 router.post('/session/:id/qrcode/regenerate', controller.regenerateQR);
 

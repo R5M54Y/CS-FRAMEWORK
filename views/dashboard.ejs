@@ -112,6 +112,7 @@
                             <td class="actions">
                                 <a href="/session/<%= s.id %>" class="btn btn-sm btn-primary" title="Open Dashboard">📊</a>
                                 <button class="btn-icon" onclick="editSession('<%= s.id %>')" title="Edit">✏️</button>
+                                <button class="btn-icon" onclick="duplicateSession('<%= s.id %>')" title="Duplicate">📋</button>
                                 <button class="btn-icon btn-icon-danger" onclick="confirmDelete('<%= s.id %>', '<%= (s.name || s.id.substring(0, 8)).replace(/'/g, "\\'") %>')" title="Delete">🗑️</button>
                             </td>
                         </tr>
@@ -291,6 +292,18 @@ async function deleteSession() {
         location.reload();
     } catch (err) {
         alert('Failed: ' + err.message);
+    }
+}
+
+// Duplicate Session
+async function duplicateSession(id) {
+    try {
+        const res = await fetch('/api/session/' + id + '/duplicate', { method: 'POST' });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        loadSessions();
+    } catch (err) {
+        alert('Failed to duplicate: ' + err.message);
     }
 }
 

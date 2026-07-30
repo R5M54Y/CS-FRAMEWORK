@@ -368,9 +368,119 @@ class SessionManager extends EventEmitter {
 
   }
 
-
+  duplicateSession(sessionId) {
+    const original = this.sessions.get(sessionId);
+    if (!original) throw new Error('Session not found');
+    let baseName = original.options?.name || original.id.slice(0, 8);
+    // Strip any existing " - Duplicate N" suffix to use the root name
+    baseName = baseName.replace(/\s*-\s*Duplicate\s+\d+$/i, '');
+    const { v4: uuidv4 } = require('uuid');
+    const newId = uuidv4();
+    const existingNames = new Set();
+    for (const [id, s] of this.sessions) {
+      if (s.options?.name) existingNames.add(s.options.name);
+    }
+    let dupNum = 1;
+    let newName;
+    while (true) {
+      newName = `${baseName} - Duplicate ${dupNum}`;
+      if (!existingNames.has(newName)) break;
+      dupNum++;
+    }
+    const origPersonaPath = path.join(config.sessionsPath, sessionId, 'persona.json');
+    if (fs.existsSync(origPersonaPath)) {
+      const personaData = fs.readJsonSync(origPersonaPath);
+      const newSessionDir = path.join(config.sessionsPath, newId);
+      fs.ensureDirSync(newSessionDir);
+      fs.writeJsonSync(path.join(newSessionDir, 'persona.json'), { ...personaData, sessionId: newId, updatedAt: new Date().toISOString() }, { spaces: 2 });
+    }
+    const origKnowledgePath = path.join(config.sessionsPath, sessionId, 'knowledge.json');
+    let knowledgeFilesToCopy = [];
+    if (fs.existsSync(origKnowledgePath)) {
+      const knowledgeData = fs.readJsonSync(origKnowledgePath);
+      knowledgeFilesToCopy = knowledgeData.files || [];
+      const newSessionDir = path.join(config.sessionsPath, newId);
+      fs.ensureDirSync(newSessionDir);
+      fs.writeJsonSync(path.join(newSessionDir, 'knowledge.json'), { ...knowledgeData, files: [], version: 1, updatedAt: new Date().toISOString() }, { spaces: 2 });
+    }
+    if (knowledgeFilesToCopy.length > 0) {
+      const newFilesDir = path.join(config.sessionsPath, newId, 'files');
+      fs.ensureDirSync(newFilesDir);
+      const newFileMeta = [];
+      for (const f of knowledgeFilesToCopy) {
+        const origFilePath = path.join(config.sessionsPath, sessionId, 'files', f.filename);
+        if (fs.existsSync(origFilePath)) {
+          const newId2 = uuidv4();
+          const ext = path.extname(f.filename);
+          const newFilename = newId2 + ext;
+          fs.copySync(origFilePath, path.join(newFilesDir, newFilename));
+          newFileMeta.push({ ...f, id: newId2, filename: newFilename, uploadedAt: new Date().toISOString() });
+        }
+      }
+      if (newFileMeta.length > 0) {
+        const knPath = path.join(config.sessionsPath, newId, 'knowledge.json');
+        const knData = fs.readJsonSync(knPath);
+        knData.files = newFileMeta;
+        fs.writeJsonSync(knPath, knData, { spaces: 2 });
+      }
+    }
+    const origGalleryPath = path.join(config.sessionsPath, sessionId, 'gallery.json');
+    let galleryFilesToCopy = [];
+    if (fs.existsSync(origGalleryPath)) {
+      const galleryData = fs.readJsonSync(origGalleryPath);
+      galleryFilesToCopy = galleryData.files || [];
+    }
+    if (galleryFilesToCopy.length > 0) {
+      const newGalleryDir = path.join(config.sessionsPath, newId, 'gallery');
+      fs.ensureDirSync(newGalleryDir);
+      const newGalleryMeta = [];
+      for (const f of galleryFilesToCopy) {
+        const origFilePath = path.join(config.sessionsPath, sessionId, 'gallery', f.filename);
+        if (fs.existsSync(origFilePath)) {
+          const newId2 = uuidv4();
+          const ext = path.extname(f.filename);
+          const newFilename = newId2 + ext;
+          fs.copySync(origFilePath, path.join(newGalleryDir, newFilename));
+          newGalleryMeta.push({ ...f, id: newId2, filename: newFilename, uploadedAt: new Date().toISOString(), url: `/api/session/${newId}/gallery/${newId2}/download` });
+        }
+      }
+      if (newGalleryMeta.length > 0) {
+        fs.writeJsonSync(path.join(config.sessionsPath, newId, 'gallery.json'), { files: newGalleryMeta }, { spaces: 2 });
+      }
+    }
+    let newPersonaId = null;
+    const origPersonaId = original.options?.personaId;
+    if (origPersonaId) {
+      const origPersona = this.personaManager.get(origPersonaId);
+      if (origPersona) {
+        const newPersona = this.personaManager.create({ ...origPersona, sessionId: newId });
+        newPersonaId = newPersona.id;
+      }
+    }
+    const holder = original.holder;
+    const newSession = new Session(newId, {
+      name: newName,
+      autoReconnect: false,
+      typingDelay: original.typingDelay,
+      readDelay: original.readDelay,
+      autoReply: original.autoReply,
+      personaId: newPersonaId,
+      port: this._assignPort(),
+      holder,
+      replyService: this.replyService
+    });
+    this.usedPorts.add(newSession.port);
+    this._attachSessionEvents(newSession);
+    this.sessions.set(newId, newSession);
+    this.profileManager.create({ id: newId, name: newName, personaId: newPersonaId });
+    this._saveSessionIndex();
+    this.emit('created', newSession.getStatus());
+    this.log.info(`Duplicated session: ${sessionId} → ${newId} (${newName}) on port ${newSession.port}`);
+    return newSession.getStatus();
+  }
 
     // Get conversations (for conversation list in dashboard)
+// Get conversations (for conversation list in dashboard)
 
     async getConversations(sessionId) {
 
