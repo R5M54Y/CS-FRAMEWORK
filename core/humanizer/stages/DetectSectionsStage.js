@@ -5,60 +5,19 @@
  *
  * Responsibilities:
  * - Detect section headers (lines ending with colon that look like titles)
- * - Match headers against keyword → emoji mapping
+ * - Query FormattingRulesRegistry for matching emoji
  * - Return annotated line metadata for DecorateStage
  *
  * Does NOT modify text.
  * Does NOT decorate.
  * Does NOT make spacing decisions.
+ * Contains NO hardcoded emoji mappings.
  */
 class DetectSectionsStage {
-  constructor(options = {}) {
+  constructor({ registry, ...options } = {}) {
     this.name = 'DetectSectionsStage';
+    this.registry = registry;
   }
-
-  /** Section keyword → emoji mapping (shared with DecorateStage) */
-  static SECTION_MAP = [
-    { match: /^marketplace/i, emoji: '🛒' },
-    { match: /^whatsapp/i, emoji: '💬' },
-    { match: /^website/i, emoji: '🔗' },
-    { match: /^alamat/i, emoji: '📍' },
-    { match: /^kontak/i, emoji: '📞' },
-    { match: /^telepon|^phone|^hp|^handphone/i, emoji: '📱' },
-    { match: /^pembayaran|^pembayar/i, emoji: '💳' },
-    { match: /^transfer/i, emoji: '🏦' },
-    { match: /^qris/i, emoji: '📲' },
-    { match: /^delivery|^pengiriman|^ongkir/i, emoji: '🚚' },
-    { match: /^download/i, emoji: '⬇️' },
-    { match: /^upload/i, emoji: '⬆️' },
-    { match: /^harga|^price|^biaya|^promo|^rp\b/i, emoji: '💰' },
-    { match: /^customer/i, emoji: '👤' },
-    { match: /^admin/i, emoji: '🙋' },
-    { match: /^fitur|^keunggulan|^kelebihan/i, emoji: '✨' },
-    { match: /^produk|^katalog|^item\b/i, emoji: '📦' },
-    { match: /^bonus/i, emoji: '🎁' },
-    { match: /^garansi/i, emoji: '🛡️' },
-    { match: /^diskon|^discount/i, emoji: '🏷️' },
-    { match: /^promo/i, emoji: '🎉' },
-    { match: /^langkah|^cara|^tutorial|^step/i, emoji: '👉' },
-    { match: /^tips/i, emoji: '💡' },
-    { match: /^testimoni/i, emoji: '⭐' },
-    { match: /^faq|^tanya/i, emoji: '❓' },
-    { match: /^catatan|^note/i, emoji: '📝' },
-    { match: /^penting|^warning|^perhatian/i, emoji: '⚠️' },
-    { match: /^jadwal|^jam|^waktu|^schedule|^buka|^tutup/i, emoji: '🕒' },
-    { match: /^success|^sukses|^berhasil/i, emoji: '✅' },
-    { match: /^error|^gagal|^salah/i, emoji: '❌' },
-    { match: /^lifetime|^selamanya|^seumur/i, emoji: '♾️' },
-    { match: /^link|^url/i, emoji: '🔗' },
-    { match: /^anak|^kids|^children/i, emoji: '🧩' },
-    { match: /^pendidikan|^edukasi|^belajar|^worksheet/i, emoji: '📚' },
-    { match: /^materi|^bahan ajar/i, emoji: '📄' },
-    { match: /^video/i, emoji: '🎥' },
-    { match: /^gambar|^image|^foto/i, emoji: '🖼️' },
-    { match: /^pdf/i, emoji: '📄' },
-    { match: /^flashcard|^kartu/i, emoji: '🔤' },
-  ];
 
   /**
    * Character range for detecting script-bearing text.
@@ -93,18 +52,13 @@ class DetectSectionsStage {
 
       if (isHeader) {
         const headerText = trimmed.replace(':', '').trim();
-        let matched = null;
-        for (const s of DetectSectionsStage.SECTION_MAP) {
-          if (s.match.test(headerText)) {
-            matched = s.emoji;
-            break;
-          }
-        }
+        const rule = this.registry ? this.registry.getSectionRule(headerText) : null;
+        const emoji = rule ? rule.sectionIcon : null;
 
         sections.push({
           lineIndex: i,
           header: headerText,
-          emoji: matched,
+          emoji,
           rawLine: lines[i],
           isSectionHeader: true
         });
@@ -114,12 +68,11 @@ class DetectSectionsStage {
     return { text, meta: { sections } };
   }
 
-  /** Convenience: match header text to emoji */
-  static matchHeader(text) {
-    for (const s of DetectSectionsStage.SECTION_MAP) {
-      if (s.match.test(text)) return s.emoji;
-    }
-    return null;
+  /** Convenience: match header text to emoji via registry */
+  static matchHeader(text, registry) {
+    if (!registry) return null;
+    const rule = registry.getSectionRule(text);
+    return rule ? rule.sectionIcon : null;
   }
 }
 

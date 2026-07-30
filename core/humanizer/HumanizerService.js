@@ -15,6 +15,7 @@ const {
   DecorateStage,
   SpacingStage,
 } = require('./stages');
+const FormattingRulesRegistry = require('./FormattingRulesRegistry');
 
 /**
  * HumanizerService — orchestrates human-like message delivery.
@@ -57,12 +58,13 @@ class HumanizerService {
     this._messageSplitter = new MessageSplitter(this.config.splitMessage);
 
     // Pipeline stages (single responsibility, ordered)
+    this.registry = new FormattingRulesRegistry();
     this._stages = [
       new NormalizeStage(),
-      new DetectFormattingStage(),
-      new DetectSectionsStage(),
+      new DetectFormattingStage({ registry: this.registry }),
+      new DetectSectionsStage({ registry: this.registry }),
       new DetectStructureStage(),
-      new DecorateStage(),
+      new DecorateStage({ registry: this.registry }),
       new SpacingStage(),
     ];
 
