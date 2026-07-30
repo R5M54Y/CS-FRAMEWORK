@@ -245,6 +245,14 @@ class MessageRepository {
     await db.run('DELETE FROM ' + TABLE + ' WHERE session_id = ?', [sessionId]);
   }
 
+  /**
+   * Delete all messages for a session and return deleted count.
+   */
+  async clearSession(sessionId) {
+    const result = await db.run('DELETE FROM ' + TABLE + ' WHERE session_id = ?', [sessionId]);
+    return result ? result.changes : 0;
+  }
+
   // ===== HELPERS =====
 
   _deriveChatId(msg) {

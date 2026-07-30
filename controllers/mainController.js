@@ -33,7 +33,8 @@ class MainController {
     this.getMessages = this.getMessages.bind(this);
     this.getMessagesByDate = this.getMessagesByDate.bind(this);
     this.getChats = this.getChats.bind(this);
-    this.getProfile = this.getProfile.bind(this);
+      this.clearMessages = this.clearMessages.bind(this);
+      this.getProfile = this.getProfile.bind(this);
     this.updateProfile = this.updateProfile.bind(this);
     this.getPersona = this.getPersona.bind(this);
     this.updatePersona = this.updatePersona.bind(this);
@@ -283,7 +284,27 @@ class MainController {
     }
     catch (err) { res.status(500).json({ error: err.message }); }
   }
-  
+
+  async clearMessages(req, res) {
+    try {
+      const { id } = req.params;
+      const session = sessionManager.getSession(id);
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+      const messageRepo = require('../core/repositories/MessageRepository');
+      const deleted = await messageRepo.clearSession(id);
+      session.messages = [];
+      session.messageCount = 0;
+      const { getIO } = require('../services/socket');
+      const io = getIO();
+      if (io) {
+        io.to(`session:${id}`).emit('session:messages-cleared', { sessionId: id });
+        io.emit('session:messages-cleared', { sessionId: id });
+      }
+      res.json({ success: true, deleted });
+    }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  }
+
   async getMessagesByDate(req, res) {
     try {
       const { id } = req.params;

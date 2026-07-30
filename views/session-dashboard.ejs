@@ -13,6 +13,7 @@
                     <span id="connect-btn-text"><%= session.connected ? '⏹ Disconnect' : (session.state === 'connecting' ? '⏳ Connecting...' : '🔗 Connect') %></span>
                 </button>
                 <button class="btn btn-secondary" onclick="sessionAction('restart')">🔃 Restart</button>
+                <button class="btn btn-outline btn-danger" onclick="showClearChatModal()">🗑 Clear Chat</button>
                 <a href="/" class="btn btn-outline">← Dashboard</a>
             </div>
         </div>
@@ -60,7 +61,25 @@
             </div>
         </div>
 
-        <!-- Tab Navigation -->
+<!-- Clear Chat Confirmation Modal -->
+<div class="modal-overlay" id="clear-chat-modal" role="dialog" aria-modal="true" style="display:none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>🗑 Clear Chat</h3>
+            <button class="modal-close" onclick="closeClearChatModal()" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body">
+            <p>Clear all conversation history?</p>
+            <p style="color: var(--danger); font-weight: 600;">This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer" style="display:flex;gap:0.5rem;justify-content:flex-end;padding:1rem;border-top:1px solid var(--border);">
+            <button class="btn btn-outline" onclick="closeClearChatModal()">Cancel</button>
+            <button class="btn btn-danger" id="clear-chat-confirm-btn" onclick="clearChat()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Navigation -->
         <div class="tab-bar">
             <button class="tab-btn active" data-tab="chats" onclick="switchTab('chats')">💬 Chats</button>
             <button class="tab-btn" data-tab="persona" onclick="switchTab('persona')">🎭 Persona</button>
@@ -1028,6 +1047,47 @@ async function uploadFiles(fileList) {
 }
 
 // Search filter
+
+// ===== CLEAR CHAT =====
+function showClearChatModal() {
+    document.getElementById('clear-chat-modal').style.display = 'flex';
+}
+function closeClearChatModal() {
+    document.getElementById('clear-chat-modal').style.display = 'none';
+}
+async function clearChat() {
+    const btn = document.getElementById('clear-chat-confirm-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Deleting...';
+    try {
+        const res = await fetch('/api/session/' + sessionId + '/messages', { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            // Clear UI
+            document.getElementById('chat-list-container').innerHTML = '<div class="empty-state"><p>No conversations yet</p></div>';
+            document.getElementById('message-panel').innerHTML = '<div class="empty-state"><p>Select a conversation</p></div>';
+            document.getElementById('message-count').textContent = '0';
+            closeClearChatModal();
+            showToast('Chat cleared: ' + data.deleted + ' messages deleted', 'success');
+        } else {
+            showToast('Failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch(e) {
+        showToast('Failed to clear chat: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Delete';
+    }
+}
+
+// Socket: listen for messages-cleared
+socket.on('session:messages-cleared', (data) => {
+    if (data.sessionId === sessionId) {
+        document.getElementById('chat-list-container').innerHTML = '<div class="empty-state"><p>No conversations yet</p></div>';
+        document.getElementById('message-panel').innerHTML = '<div class="empty-state"><p>Select a conversation</p></div>';
+        document.getElementById('message-count').textContent = '0';
+    }
+});
 
 // ===== GALLERY (Dropzone) =====
 let galleryDropzone = null;

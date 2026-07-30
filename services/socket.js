@@ -89,6 +89,12 @@ function setupSocketIO(httpServer) {
     io.to(`session:${data.sessionId}`).emit('bot:state', data);
   });
 
+  // Messages cleared
+  sessionManager.on('messages-cleared', (data) => {
+    io.emit('session:messages-cleared', data);
+    io.to(`session:${data.sessionId}`).emit('session:messages-cleared', data);
+  });
+
   // AI Queue stats broadcast every 2s
   setInterval(() => {
     const queue = getQueue();

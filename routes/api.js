@@ -27,6 +27,7 @@ router.post('/session/:id/qrcode/regenerate', controller.regenerateQR);
 // Messages
 router.post('/session/:id/send', controller.sendMessage);
 router.get('/session/:id/messages', controller.getMessages);
+router.delete('/session/:id/messages', controller.clearMessages);
 router.get('/session/:id/messages/date', controller.getMessagesByDate);
 router.get('/session/:id/chats', controller.getChats);
 
