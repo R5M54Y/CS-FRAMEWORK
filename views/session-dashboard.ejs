@@ -906,74 +906,6 @@ async function loadKnowledgeConfig() {
     }
 }
 
-async function loadKnowledgeFiles() {
-    try {
-        const res = await fetch('/api/session/' + sessionId + '/knowledge-files');
-        const files = await res.json();
-        renderKnowledgeFiles(files);
-    } catch (e) {
-        console.error('Failed to load knowledge files:', e);
-    }
-}
-
-function renderKnowledgeFiles(files) {
-    const container = document.getElementById('knowledge-files-list');
-    if (!container) return;
-    
-    if (!files || files.length === 0) {
-        container.innerHTML = '<div class="empty-files-state"><p>No files uploaded yet</p></div>';
-        return;
-    }
-    
-    container.innerHTML = files.map(file => {
-        const icon = getFileIcon(file.originalname || file.name);
-        const size = formatFileSize(file.size);
-        const date = file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
-        
-        return `
-            <div class="knowledge-file-item">
-                <div class="file-info">
-                    <span class="file-icon">${icon}</span>
-                    <div class="file-details">
-                        <span class="file-name">${escapeHtml(file.originalname || file.name)}</span>
-                        <span class="file-meta">${size} · ${date}</span>
-                    </div>
-                </div>
-                <div class="file-actions">
-                    <a href="/api/session/${sessionId}/knowledge-files/${file.id || file._id}/download" class="btn btn-sm btn-outline" title="Download">⬇️</a>
-                    <button class="btn btn-sm btn-danger" onclick="deleteKnowledgeFile('${file.id || file._id}')" title="Delete">🗑️</button>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-function getFileIcon(filename) {
-    if (!filename) return '📄';
-    const ext = filename.split('.').pop().toLowerCase();
-    const icons = { pdf: '📕', txt: '📝', csv: '📊', md: '📑', json: '📋' };
-    return icons[ext] || '📄';
-}
-
-async function deleteKnowledgeFile(fileId) {
-    const confirmed = await dialogConfirm('Delete this file?');
-    if (!confirmed) return;
-    
-    try {
-        const res = await fetch('/api/session/' + sessionId + '/knowledge-files/' + fileId, { method: 'DELETE' });
-        const data = await res.json();
-        if (data.error) {
-            showToast('Error: ' + data.error, 'error');
-        } else {
-            showToast('File deleted', 'success');
-            loadKnowledgeFiles();
-        }
-    } catch (e) {
-        console.error('Failed to delete file:', e);
-        showToast('Failed to delete file', 'error');
-    }
-}
-
 async function saveKnowledgeConfig() {
     const btn = document.getElementById('save-knowledge-btn');
     const statusEl = document.getElementById('knowledge-status');
@@ -1114,10 +1046,6 @@ async function deleteGalleryFile(fileId) {
     }
 }
 
-// Initialize gallery upload on page load
-document.addEventListener('DOMContentLoaded', function() {
-    initGalleryUpload();
-});
 function showClearChatModal() {
     document.getElementById('clear-chat-modal').style.display = 'flex';
 }
@@ -1158,69 +1086,9 @@ socket.on('session:messages-cleared', (data) => {
     }
 });
 
-// ===== GALLERY (Dropzone) =====
-let galleryDropzone = null;
-
-function initGalleryDropzone() {
-    if (typeof Dropzone === 'undefined') { console.warn('Dropzone not loaded'); return; }
-    const el = document.getElementById('gallery-dropzone');
-    if (!el) return;
-    galleryDropzone = new Dropzone('#gallery-dropzone', {
-        url: '/api/session/' + sessionId + '/gallery',
-        maxFilesize: 50,
-        maxFiles: 10,
-        acceptedFiles: 'image/*',
-        addRemoveLinks: true,
-        headers: { 'Authorization': 'Bearer ' + _API_TOKEN },
-        success: function(file, resp) {
-            showToast('Uploaded successfully', 'success');
-            loadGallery();
-        },
-        error: function(file, resp) {
-            showToast('Upload failed: ' + (resp.error || resp), 'error');
-        }
-    });
-}
-
-async function loadGallery() {
-    const grid = document.getElementById('gallery-preview-grid');
-    if (!grid) return;
-    grid.innerHTML = '<p>Loading...</p>';
-    try {
-        const res = await fetch('/api/session/' + sessionId + '/gallery');
-        const files = await res.json();
-        if (!Array.isArray(files) || files.length === 0) {
-            grid.innerHTML = '<p>No images uploaded yet</p>';
-            return;
-        }
-        grid.innerHTML = files.map(f =>
-            '<div style="border:1px solid #ddd;padding:8px;border-radius:4px;text-align:center">' +
-            '<img src="/api/session/' + sessionId + '/gallery/' + f.id + '/download" style="max-width:100%;max-height:150px" /><br/>' +
-            '<small>' + (f.originalName || '') + '</small>' +
-            '<br/><button onclick="deleteGallery(\'' + f.id + '\')" style="margin-top:4px;font-size:12px">Delete</button>' +
-            '</div>'
-        ).join('');
-    } catch(e) {
-        grid.innerHTML = '<p style="color:red">Failed to load gallery</p>';
-    }
-}
-
-async function deleteGallery(fileId) {
-    if (!confirm('Delete this image?')) return;
-    try {
-        const res = await fetch('/api/session/' + sessionId + '/gallery/' + fileId, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + _API_TOKEN } });
-        const data = await res.json();
-        if (data.success) { showToast('Deleted', 'success'); loadGallery(); }
-        else showToast('Delete failed', 'error');
-    } catch(e) {
-        showToast('Delete failed', 'error');
-    }
-}
-
-// Initialize gallery when page loads
+// Initialize gallery upload on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Delay init to ensure Dropzone script is loaded
-    setTimeout(initGalleryDropzone, 500);
+    initGalleryUpload();
 });
 </script>
 <%- include('partials/footer') %>
