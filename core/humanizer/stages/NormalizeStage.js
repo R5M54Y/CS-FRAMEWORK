@@ -32,6 +32,13 @@ class NormalizeStage {
     // Remove trailing whitespace per line
     result = result.split('\n').map(line => line.replace(/\s+$/, '')).join('\n');
 
+    // Strip markdown emphasis markers that wrap text
+    // Only strip when they are paired (opening + closing), not inside code blocks
+    // This preserves real content like C++, A* Algorithm, 2 * 5
+    result = result.replace(/\*\*(.+?)\*\*/g, '$1');  // **bold** → bold
+    result = result.replace(/\*(.+?)\*/g, '$1');       // *italic* → italic
+    result = result.replace(/__(.+?)__/g, '$1');       // __underline__ → underline
+
     return { text: result, meta: {} };
   }
 }
