@@ -259,13 +259,28 @@ class HumanizerService {
   _decorate(text) {
     if (!text) return { text, meta: {} };
 
-    let result = { text, meta: {} };
+    // PROTECT URLs: extract and replace with placeholders before any formatting.
+    // Match full URLs (with dots, slashes, etc.) and strip trailing markdown markers.
+    const urlRegex = /https?:\/\/[^\s<>"']+/g;
+    const urls = [];
+    // First, strip markdown that wraps the entire URL. If the URL is followed by
+    // markdown closing markers, those are included in the match and must be stripped.
+    // Leading markdown before the URL is handled by removing it from the source.
+    let protectedText = text;
+    // Remove leading bold/italic that wraps a URL: **https://... → https://...
+    protectedText = protectedText.replace(/(\*\*+|__+|~~+)(https?:\/\/)/g, '$2');
+    protectedText = protectedText.replace(urlRegex, (match) => {
+      // Strip trailing markdown markers from the URL
+      const cleanUrl = match.replace(/(\*\*+|__+|~~+|\*+)$/, '');
+      urls.push(cleanUrl);
+      return `§§URL_${urls.length - 1}_§§`;
+    });
+
+    let result = { text: protectedText, meta: {} };
 
     // Run each stage in sequence. Each stage receives the previous stage's output.
     // Stages: Normalize → RemoveMarkdown → DetectFormatting → DetectSections → DetectStructure → DetectLists → DetectSpecialBlocks → SemanticAnalyzer → Decorate → SemanticChunk → ImproveSpacing → SplitLongMessages → FinalNormalize
     for (const stage of this._stages) {
-      // DetectFormattingStage sets meta.alreadyFormatted — skip decoration stages,
-      // but still run structural stages (chunking, spacing, normalize)
       if (result.meta.alreadyFormatted && 
           stage.name !== 'NormalizeStage' && 
           stage.name !== 'DetectFormattingStage' &&
@@ -277,6 +292,11 @@ class HumanizerService {
       }
       result = stage.process(result.text, result.meta);
     }
+
+    // RESTORE URLs: replace placeholders with original URLs
+    result.text = result.text.replace(/§§URL_(\d+)_§§/g, (_, idx) => {
+      return urls[parseInt(idx, 10)] || '';
+    });
 
     return result;
   }
