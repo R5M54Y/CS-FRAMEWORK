@@ -54,6 +54,9 @@ class PromptBuilder {
       // WhatsApp formatting rules
       parts.push(this._sectionFormatting());
 
+      // Media tool capability
+      parts.push(this._sectionMediaTool());
+
       // Knowledge base (from config)
       const kbSection = this._sectionKnowledgeBase(knowledgeConfig);
       if (kbSection) parts.push(kbSection);
@@ -94,6 +97,9 @@ class PromptBuilder {
 
     // WhatsApp formatting rules
     parts.push(this._sectionFormatting());
+
+    // Media tool capability
+    parts.push(this._sectionMediaTool());
 
     // Products
     if (products && products.length > 0) {
@@ -285,6 +291,49 @@ class PromptBuilder {
       '',
       'PENTING:',
       'Ini hanya aturan formatting. Jangan mengubah fakta, harga, URL, nama produk, atau aturan bisnis.',
+    ].join('\n');
+  }
+
+  _sectionMediaTool() {
+    return [
+      'MEDIA GALLERY:',
+      '',
+      'Anda memiliki akses ke galeri gambar produk. Gunakan saat pelanggan meminta:',
+      'contoh, sample, preview, screenshot, gambar, foto, ilustrasi, video,',
+      '"seperti apa", "boleh lihat", "ada contohnya", "tampilannya", "hasilnya", demo.',
+      '',
+      'KETIKA PELANGGAN MEMINTA MEDIA:',
+      'JANGAN mendeskripsikan media secara tekstual.',
+      'JANGAN berpura-pura mengirim media.',
+      'JANGAN membuat URL palsu.',
+      '',
+      'Sebagai gantinya, outputkan SATU action block dengan format berikut:',
+      '',
+      '<action type="send_gallery">',
+      '<count>5</count>',
+      '<caption>',
+      'Teks natural yang siap dikirim ke WhatsApp...',
+      '</caption>',
+      '</action>',
+      '',
+      'ATURAN ACTION BLOCK:',
+      '- Hanya SATU action block per respons.',
+      '- <count>: jumlah gambar yang diminta (1-10).',
+      '- <caption>: teks natural sesuai persona, siap kirim ke WhatsApp.',
+      '- Caption JANGAN menyebutkan: sistem, AI, galeri, database, atau mekanisme internal.',
+      '- Caption harus tetap menggunakan gaya bicara dan persona yang sudah ditentukan.',
+      '',
+      'Jika media TIDAK diperlukan, respons secara normal tanpa action block.',
+      'Action block hanya digunakan jika benar-benar membantu pelanggan.',
+      '',
+      'Contoh respons yang benar:',
+      '',
+      '<action type="send_gallery">',
+      '<count>3</count>',
+      '<caption>',
+      'Tentu Kak 😊 Berikut beberapa contoh produk yang bisa Kakak lihat.',
+      '</caption>',
+      '</action>',
     ].join('\n');
   }
 
