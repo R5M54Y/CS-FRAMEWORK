@@ -1,17 +1,15 @@
 'use strict';
 
 /**
- * SplitLongMessagesStage — Stage 9 of the Humanizer pipeline.
+ * SplitLongMessagesStage — Stage 10 of the Humanizer pipeline.
  *
  * Responsibilities:
- * - Annotate the text with suggested split points for long messages
- * - Target: 650 characters per message, hard limit 700
- * - Split on paragraph, section, list boundaries
- * - Never split URLs, phone numbers, prices, or sentences
+ * - Detect section boundaries from the final decorated text
+ * - Each section becomes its own message
+ * - Enforce size limits: target ~650 chars, hard limit 700 chars
+ * - Never split URLs, phone numbers, prices, or list items
  *
- * This stage does NOT split the text (that's MessageSplitter's job).
- * It produces metadata: splitPoints[] for downstream splitter use.
- * If the text is under 650 chars, no split points are produced.
+ * Produces chunks[] in metadata for MessageSplitter to use directly.
  */
 class SplitLongMessagesStage {
   constructor(options = {}) {
@@ -20,45 +18,106 @@ class SplitLongMessagesStage {
     this.hardLimit = 700;
   }
 
+  /** Detect decorated section headers (emoji + text + colon) */
+  static HEADER_PATTERN = /^[📦✅💰🕒🚚⬇️⬆️✨🎁🛡️🏷️🎉👉💡⭐❓📝⚠️❌♾️🔗🧩📚📄🎥🖼️🔤🛒💬📞📱💳🏦📲👤🙋]\s.+:$/u;
+
   /**
    * @param {string} text
    * @param {Object} meta
-   * @returns {{ text: string, meta: { splitPoints: Array } }}
+   * @returns {{ text: string, meta: { chunks: Array } }}
    */
   process(text, meta = {}) {
-    const splitPoints = [];
-    if (!text) return { text, meta: { ...meta, splitPoints } };
+    const chunks = [];
+    if (!text) return { text, meta: { ...meta, chunks } };
 
-    // Only split if text exceeds target
-    if (text.length <= this.targetLength) {
-      return { text, meta: { ...meta, splitPoints } };
+    // Detect section boundaries from the FINAL text
+    const boundaries = this._detectBoundaries(text);
+
+    // Build chunks from boundaries
+    const lines = text.split('\n');
+    const rawChunks = [];
+    for (let i = 0; i < boundaries.length; i++) {
+      const start = boundaries[i];
+      const end = i + 1 < boundaries.length ? boundaries[i + 1] : lines.length;
+      const chunkLines = lines.slice(start, end);
+      const chunkText = chunkLines.join('\n').trim();
+      if (chunkText) rawChunks.push(chunkText);
     }
 
+    // Enforce size limits on each chunk
+    for (const chunk of rawChunks) {
+      if (chunk.length <= this.hardLimit) {
+        chunks.push(chunk);
+      } else {
+        const subChunks = this._subSplit(chunk);
+        chunks.push(...subChunks);
+      }
+    }
+
+    return { text, meta: { ...meta, chunks } };
+  }
+
+  /** Detect section header boundaries from the final text after spacing stage */
+  _detectBoundaries(text) {
     const lines = text.split('\n');
+    const boundaries = [];
 
-    // Find natural split points: paragraph breaks (empty lines), section headers
-    let charCount = 0;
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const nextCharCount = charCount + line.length + 1; // +1 for newline
-
-      if (nextCharCount > this.targetLength && charCount > 0) {
-        // Try to split at this line
-        // Prefer empty lines and section headers as split points
-        splitPoints.push(i);
-        charCount = 0;
-      } else if (nextCharCount > this.hardLimit && charCount > 0) {
-        // Hard limit — force split even at mid-paragraph
-        if (line.trim()) {
-          splitPoints.push(i);
-          charCount = 0;
+      const trimmed = lines[i].trim();
+      if (SplitLongMessagesStage.HEADER_PATTERN.test(trimmed)) {
+        if (boundaries.length === 0) {
+          let hasOpener = false;
+          for (let j = 0; j < i; j++) {
+            if (lines[j].trim().length > 0) { hasOpener = true; break; }
+          }
+          if (hasOpener) boundaries.push(0);
         }
+        boundaries.push(i);
+      }
+    }
+
+    if (boundaries.length === 0) boundaries.push(0);
+    return [...new Set(boundaries)].sort((a, b) => a - b);
+  }
+
+  /** Split oversized chunk by paragraphs, then sentences */
+  _subSplit(text) {
+    if (text.length <= this.hardLimit) return [text];
+    const result = [];
+    let remaining = text;
+
+    while (remaining.length > 0) {
+      if (remaining.length <= this.hardLimit) { result.push(remaining); break; }
+
+      const paragraphSplit = remaining.lastIndexOf('\n\n', this.targetLength);
+      if (paragraphSplit > 0) {
+        result.push(remaining.slice(0, paragraphSplit).trim());
+        remaining = remaining.slice(paragraphSplit + 2).trim();
+        continue;
       }
 
-      charCount = nextCharCount;
+      const sentenceSplit = this._lastSentenceBoundary(remaining, this.targetLength);
+      if (sentenceSplit > 0) {
+        result.push(remaining.slice(0, sentenceSplit).trim());
+        remaining = remaining.slice(sentenceSplit).trim();
+        continue;
+      }
+
+      result.push(remaining.slice(0, this.hardLimit).trim());
+      remaining = remaining.slice(this.hardLimit).trim();
     }
 
-    return { text, meta: { ...meta, splitPoints } };
+    return result.filter(Boolean);
+  }
+
+  _lastSentenceBoundary(text, beforePos) {
+    const candidates = ['. ', '! ', '? ', '.\n', '!\n', '?\n'];
+    let best = -1;
+    for (const c of candidates) {
+      const idx = text.lastIndexOf(c, beforePos);
+      if (idx > best) best = idx + 1;
+    }
+    return best;
   }
 }
 

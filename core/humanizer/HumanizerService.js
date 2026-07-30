@@ -17,6 +17,7 @@ const {
   DetectSpecialBlocksStage,
   DecorateStage,
   ImproveSpacingStage,
+  SemanticChunkStage,
   SplitLongMessagesStage,
   FinalNormalizeStage,
 } = require('./stages');
@@ -73,6 +74,7 @@ class HumanizerService {
       new DetectListsStage({ registry: this.registry }),
       new DetectSpecialBlocksStage(),
       new DecorateStage({ registry: this.registry }),
+      new SemanticChunkStage(),
       new ImproveSpacingStage(),
       new SplitLongMessagesStage(),
       new FinalNormalizeStage(),
@@ -192,10 +194,17 @@ class HumanizerService {
     await delayEngine.sleep(readDelay);
 
     // 4. Decorate plain text with WhatsApp formatting (if applicable)
-    const decorated = this._decorate(text);
+    const decoratedResult = this._decorate(text);
+    const finalText = decoratedResult.text;
+    const chunks = decoratedResult.meta?.chunks || null;
 
-    // 5. Split message into parts
-    const parts = this._messageSplitter.split(decorated);
+    // 5. Determine message parts — use semantic chunks if available, otherwise split
+    let parts;
+    if (chunks && chunks.length > 0) {
+      parts = chunks;
+    } else {
+      parts = this._messageSplitter.split(finalText);
+    }
 
     // 6. Send each part with pauses between
     const results = [];
@@ -243,14 +252,15 @@ class HumanizerService {
    * Orchestrates the pipeline stages in order.
    * Only improves presentation — never changes meaning.
    * Skips if text already has emoji (AI already formatted it).
+   * @returns {{ text: string, meta: Object }}
    */
   _decorate(text) {
-    if (!text) return text;
+    if (!text) return { text, meta: {} };
 
     let result = { text, meta: {} };
 
     // Run each stage in sequence. Each stage receives the previous stage's output.
-    // Stages: Normalize → RemoveMarkdown → DetectFormatting → DetectSections → DetectStructure → DetectLists → DetectSpecialBlocks → Decorate → ImproveSpacing → SplitLongMessages → FinalNormalize
+    // Stages: Normalize → RemoveMarkdown → DetectFormatting → DetectSections → DetectStructure → DetectLists → DetectSpecialBlocks → Decorate → ImproveSpacing → SemanticChunk → SplitLongMessages → FinalNormalize
     for (const stage of this._stages) {
       // DetectFormattingStage sets meta.alreadyFormatted — short-circuit after it
       if (result.meta.alreadyFormatted && stage.name !== 'NormalizeStage' && stage.name !== 'DetectFormattingStage') {
@@ -259,7 +269,7 @@ class HumanizerService {
       result = stage.process(result.text, result.meta);
     }
 
-    return result.text;
+    return result;
   }
 
   // ---- component factories (lazy, cached per sessionId) ----

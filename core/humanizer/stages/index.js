@@ -9,6 +9,7 @@ const DetectListsStage = require('./DetectListsStage');
 const DetectSpecialBlocksStage = require('./DetectSpecialBlocksStage');
 const DecorateStage = require('./DecorateStage');
 const ImproveSpacingStage = require('./ImproveSpacingStage');
+const SemanticChunkStage = require('./SemanticChunkStage');
 const SplitLongMessagesStage = require('./SplitLongMessagesStage');
 const FinalNormalizeStage = require('./FinalNormalizeStage');
 
@@ -22,6 +23,7 @@ module.exports = {
   DetectSpecialBlocksStage,
   DecorateStage,
   ImproveSpacingStage,
+  SemanticChunkStage,
   SplitLongMessagesStage,
   FinalNormalizeStage,
 };
