@@ -97,11 +97,12 @@ class MessageRepository {
     const sql = `
       SELECT * FROM ${TABLE}
       WHERE session_id = ? AND (chat_id = ? OR sender LIKE ? OR receiver LIKE ?)
-      ORDER BY timestamp ASC
+      ORDER BY timestamp DESC
       LIMIT ? OFFSET ?
     `;
     const rows = await db.all(sql, [sessionId, chatId, pattern, pattern, limit, offset]);
-    return rows.map(row => this._toMessage(row));
+    // Retrieve newest N, then reverse to chronological order for display
+    return rows.reverse().map(row => this._toMessage(row));
   }
 
   /**
