@@ -44,6 +44,13 @@ class ActionParser {
           count: countMatch ? parseInt(countMatch[1], 10) : 5,
           caption: captionMatch ? captionMatch[1].trim() : ''
         });
+      } else if (type === 'send_marketplace_url') {
+        const messageMatch = body.match(/<message>([\s\S]*?)<\/message>/);
+
+        actions.push({
+          type: 'send_marketplace_url',
+          message: messageMatch ? messageMatch[1].trim() : ''
+        });
       }
 
       // Remove the action block from text

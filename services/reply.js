@@ -131,6 +131,8 @@ class ReplyService {
     for (const action of actions) {
       if (action.type === 'send_gallery') {
         await this._sendGallery(session, sessionId, to, action);
+      } else if (action.type === 'send_marketplace_url') {
+        await this._sendMarketplaceUrl(session, sessionId, to, action);
       }
     }
   }
@@ -156,7 +158,6 @@ class ReplyService {
     try {
       firstMsg = await session.sendImage(to, firstUrl, caption);
     } catch (err) {
-      this.log.error(`Gallery first image send error: ${err.message}`);
       return;
     }
     if (!firstMsg || !firstMsg.key) return;
@@ -172,10 +173,32 @@ class ReplyService {
             albumParentKey: firstMsg.key
           }, {});
         } catch (err) {
-          this.log.error(`Gallery album image send error: ${err.message}`);
+          // album image send failed, continue with next
         }
       }
     }
+  }
+
+  async _sendMarketplaceUrl(session, sessionId, to, action) {
+    const knowledgeConfig = this.sessionManager.getKnowledgeConfig(sessionId);
+    const url = knowledgeConfig?.marketplaceUrl || '';
+    const message = action.message || '';
+
+    this.log.info(`Marketplace URL action — session=${sessionId} url=${url ? 'PRESENT' : 'MISSING'}`);
+
+    if (!url) {
+      const fallback = 'Maaf Kak, link pembelian belum tersedia saat ini. Silakan hubungi admin terlebih dahulu.';
+      await session.sendMessage(to, fallback);
+      return;
+    }
+
+    // Send AI's message first
+    if (message) {
+      await session.sendMessage(to, message);
+    }
+
+    // Send marketplace URL as standalone plain-text message (no markdown, no emoji)
+    await session.sendMessage(to, url);
   }
 
   async _fallback(session, to, persona) {
