@@ -200,6 +200,15 @@ class HumanizerService {
     const finalText = decoratedResult.text;
     const chunks = decoratedResult.meta?.chunks || null;
 
+    // Safety net: reject if any internal placeholder is still present
+    const placeholderRegex = /§§.+?§§/;
+    if (placeholderRegex.test(finalText) || (chunks && chunks.some(c => placeholderRegex.test(c)))) {
+      this.log.error(`INTERNAL PLACEHOLDER LEAK DETECTED — message BLOCKED`);
+      this.log.error(`text: ${finalText.substring(0, 200)}`);
+      await flow.stop();
+      return null;
+    }
+
     // 5. Determine message parts — use semantic chunks if available, otherwise split
     let parts;
     if (chunks && chunks.length > 0) {
@@ -293,10 +302,16 @@ class HumanizerService {
       result = stage.process(result.text, result.meta);
     }
 
-    // RESTORE URLs: replace placeholders with original URLs
+    // RESTORE URLs: replace placeholders with original URLs in text AND chunks
     result.text = result.text.replace(/§§URL_(\d+)_§§/g, (_, idx) => {
       return urls[parseInt(idx, 10)] || '';
     });
+    // Also restore in chunks (created by SplitLongMessagesStage before restore)
+    if (result.meta && Array.isArray(result.meta.chunks)) {
+      result.meta.chunks = result.meta.chunks.map(chunk =>
+        chunk.replace(/§§URL_(\d+)_§§/g, (_, idx) => urls[parseInt(idx, 10)] || '')
+      );
+    }
 
     return result;
   }
