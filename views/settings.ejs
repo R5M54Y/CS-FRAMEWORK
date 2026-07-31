@@ -15,7 +15,7 @@
                     <div class="form-group">
                         <label>AI API Key</label>
                         <input type="password" id="set-ai-api-key" class="form-control" value="<%= ai.hasApiKey ? '••••••••' : '' %>">
-                        <small id="ai-key-help" class="form-text">Set to override AI_API_KEY environment variable</small>
+                        <small id="ai-key-help" class="form-text">Saved in Settings (single source of truth). Leave masked to keep current key.</small>
                     </div>
                 </div>
                 <div class="form-row">
@@ -26,59 +26,6 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Save AI Settings</button>
             </form>
-        </div>
-
-        <div class="settings-section">
-            <h2>Global Settings</h2>
-            <form id="global-settings-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Default Port</label>
-                        <input type="number" id="set-port" class="form-control" value="<%= config.port %>">
-                    </div>
-                    <div class="form-group">
-                        <label>Host</label>
-                        <input type="text" id="set-host" class="form-control" value="<%= config.host %>">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Default Typing Delay (ms)</label>
-                        <input type="number" id="set-typing-delay" class="form-control" value="<%= config.defaultTypingDelay %>">
-                    </div>
-                    <div class="form-group">
-                        <label>Default Read Delay (ms)</label>
-                        <input type="number" id="set-read-delay" class="form-control" value="<%= config.defaultReadDelay %>">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group checkbox-group">
-                        <input type="checkbox" id="set-auto-reply" <%= config.autoReply ? 'checked' : '' %>>
-                        <label for="set-auto-reply">Auto Reply</label>
-                    </div>
-                    <div class="form-group checkbox-group">
-                        <input type="checkbox" id="set-qr-terminal" <%= config.enableQrTerminal ? 'checked' : '' %>>
-                        <label for="set-qr-terminal">QR in Terminal</label>
-                    </div>
-                    <div class="form-group checkbox-group">
-                        <input type="checkbox" id="set-realtime" <%= config.enableRealtime ? 'checked' : '' %>>
-                        <label for="set-realtime">Realtime</label>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary">Save Settings</button>
-            </form>
-        </div>
-
-        <div class="settings-section">
-            <h2>System Info</h2>
-            <table class="table">
-                <tbody>
-                    <tr><td>Node.js</td><td><%= process.version %></td></tr>
-                    <tr><td>Platform</td><td><%= process.platform %> (<%= process.arch %>)</td></tr>
-                    <tr><td>Memory</td><td><%= Math.round(process.memoryUsage().heapUsed / 1024 / 1024) %> MB</td></tr>
-                    <tr><td>Uptime</td><td><%= Math.floor(process.uptime()) %>s</td></tr>
-                </tbody>
-            </table>
         </div>
     </div>
 </section>
@@ -109,27 +56,5 @@ if (document.getElementById('ai-settings-form')) {
         if (res.ok) alert('AI settings saved!');
     });
 }
-
-// Global Settings Form Handler
-document.getElementById('global-settings-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = {
-        server: {
-            port: parseInt(document.getElementById('set-port').value),
-            host: document.getElementById('set-host').value,
-            defaultTypingDelay: parseInt(document.getElementById('set-typing-delay').value),
-            defaultReadDelay: parseInt(document.getElementById('set-read-delay').value),
-            autoReply: document.getElementById('set-auto-reply').checked,
-            enableQrTerminal: document.getElementById('set-qr-terminal').checked,
-            enableRealtime: document.getElementById('set-realtime').checked
-        }
-    };
-    const res = await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    });
-    if (res.ok) alert('Global settings saved! Restart for port changes.');
-});
 </script>
 <%- include('partials/footer') %>

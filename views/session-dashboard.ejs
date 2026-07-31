@@ -255,6 +255,36 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// One-line chat preview: strip line breaks, collapse whitespace, preserve emojis
+function previewText(text) {
+    return String(text || '').replace(/\s+/g, ' ').trim() || '(No messages yet)';
+}
+
+// Phone number display: 62812345678901 -> +62 812-3456-7890
+function formatPhone(num) {
+    let d = String(num || '').replace(/[^\d]/g, '');
+    if (d.startsWith('0')) d = '62' + d.slice(1);
+    if (d.startsWith('62') && d.length > 2) {
+        const rest = d.slice(2);
+        const groups = rest.slice(0, 3) + '-' + rest.slice(3, 7) + (rest.length > 7 ? '-' + rest.slice(7) : '');
+        return '+62 ' + groups;
+    }
+    return d;
+}
+
+function _buildParticipantHeader(jid) {
+    // Read displayName / phone from the chat-item data attributes
+    const item = document.querySelector(`.chat-item[data-participant="${jid}"]`);
+    const displayName = item ? item.getAttribute('data-display-name') : '';
+    const phoneRaw = item ? item.getAttribute('data-phone') : '';
+    // Strip @domain suffix from phone
+    const phone = phoneRaw.replace(/@.*$/, '');
+    if (displayName && displayName !== phone) {
+        return displayName + ' - ' + phone;
+    }
+    return phone || displayName || jid.replace(/@.*$/, '');
+}
+
 function formatTime(timestamp) {
     if (!timestamp) return '';
     const date = new Date(timestamp);
@@ -519,6 +549,7 @@ socket.on('session:sent', (data) => {
     if (data.sessionId === sessionId && selectedParticipant && (normalizeParticipant(data.user) === selectedParticipant || normalizeParticipant(data.to) === selectedParticipant)) {
         appendMessage(data);
     }
+    loadConversations();
 });
 socket.on('bot:state', (data) => {
     if (data.sessionId === sessionId && selectedParticipant) {
@@ -557,27 +588,27 @@ function renderConversations(conversations) {
     }
     
     container.innerHTML = conversations.map(conv => {
-        const avatarLetter = conv.name ? conv.name.charAt(0).toUpperCase() : '?';
+        const displayName = conv.displayName || formatPhone(conv.phone || conv.name);
+        const avatarLetter = displayName ? displayName.charAt(0).toUpperCase() : '?';
         const unreadCount = conv.unread > 0 ? `<div class="chat-unread">${conv.unread}</div>` : '';
         const statusBadge = buildBotBadge(conv.botPausedBy);
         
         return `
-            <div class="chat-item ${selectedParticipant === conv.name ? 'selected' : ''}" data-participant="${conv.name}" onclick="selectConversation('${conv.name}')">
+            <div class="chat-item ${selectedParticipant === conv.name ? 'selected' : ''}" data-participant="${conv.name}" data-display-name="${(conv.displayName || '').replace(/'/g, '&#39;')}" data-phone="${(conv.phone || '').replace(/'/g, '&#39;')}" onclick="selectConversation('${conv.name}')">
                 <div class="chat-avatar ${conv.avatar ? '' : 'offline'}">
-                    ${conv.avatar ? `<img src="${conv.avatar}" alt="${conv.name}">` : avatarLetter}
+                    ${conv.avatar ? `<img src="${conv.avatar}" alt="${escapeHtml(displayName)}">` : escapeHtml(avatarLetter)}
                 </div>
                 <div class="chat-info">
                     <div class="chat-name">
-                        ${conv.name}
+                        <span class="chat-name-text">${escapeHtml(displayName)}</span>
                         ${statusBadge}
                     </div>
-                    <div class="chat-preview">
-                        ${escapeHtml(conv.lastMessage || '(No messages yet)')}
-                    </div>
-                    <div class="chat-meta">
-                        <span class="chat-time">${formatTime(conv.timestamp)}</span>
-                        ${unreadCount}
-                    </div>
+                    <div class="chat-number">${escapeHtml(formatPhone(conv.phone || conv.name))}</div>
+                    <div class="chat-preview">${escapeHtml(previewText(conv.lastMessage))}</div>
+                </div>
+                <div class="chat-meta">
+                    <span class="chat-time">${formatTime(conv.timestamp)}</span>
+                    ${unreadCount}
                 </div>
             </div>
         `;
@@ -620,7 +651,7 @@ async function selectConversation(participant) {
     document.getElementById('reply-textarea').disabled = false;
     document.getElementById('send-button').disabled = false;
     
-    document.getElementById('participant-name').textContent = participant;
+    document.getElementById('participant-name').textContent = _buildParticipantHeader(participant);
     document.getElementById('participant-avatar').textContent = participant ? participant.charAt(0).toUpperCase() : '👤';
     
     // Show clear chat button when conversation is selected

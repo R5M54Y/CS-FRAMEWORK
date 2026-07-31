@@ -5,7 +5,8 @@ const QRCode = require('qrcode');
 const path = require("path");
 const { parseUpload } = require("../utils/file-upload");
 const sessionManager = require('../core/session-manager');
-const { ProductManager, KnowledgeManager, ProfileManager, PersonaManager, SettingsManager } = require('../core/storage');
+const { ProductManager, KnowledgeManager, ProfileManager, PersonaManager } = require('../core/storage');
+const SettingsManager = require('../services/settings');
 const config = require('../config');
 
 class MainController {
@@ -138,7 +139,37 @@ class MainController {
       }
 
   updateSettings(req, res) {
-    const result = this.settingsManager.set(req.body);
+    const body = req.body || {};
+    const ai = body.ai || {};
+
+    // Validation: endpoint required + valid URL, apiKey required, model required
+    if (ai.endpoint !== undefined || ai.aiEndpoint !== undefined) {
+      const endpoint = ai.endpoint !== undefined ? ai.endpoint : ai.aiEndpoint;
+      if (!endpoint || typeof endpoint !== 'string' || !endpoint.trim()) {
+        return res.status(400).json({ success: false, error: 'AI Endpoint is required' });
+      }
+      try {
+        const parsed = new URL(endpoint.trim());
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          return res.status(400).json({ success: false, error: 'AI Endpoint must be a valid http(s) URL' });
+        }
+      } catch (err) {
+        return res.status(400).json({ success: false, error: 'AI Endpoint must be a valid URL' });
+      }
+    }
+    if (ai.apiKey !== undefined && ai.apiKey !== '••••••••') {
+      if (!ai.apiKey || typeof ai.apiKey !== 'string' || !ai.apiKey.trim()) {
+        return res.status(400).json({ success: false, error: 'API Key is required' });
+      }
+    }
+    if (ai.model !== undefined || ai.aiModel !== undefined) {
+      const model = ai.model !== undefined ? ai.model : ai.aiModel;
+      if (!model || typeof model !== 'string' || !model.trim()) {
+        return res.status(400).json({ success: false, error: 'Model is required' });
+      }
+    }
+
+    const result = this.settingsManager.set(body);
     return res.json(result);
   }
 

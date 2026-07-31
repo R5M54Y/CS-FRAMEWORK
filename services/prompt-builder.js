@@ -51,6 +51,9 @@ class PromptBuilder {
       // Identity policy — mandatory, always injected
       parts.push(this._sectionIdentityPolicy());
 
+      // Customer address policy — natural "Kak" usage
+      parts.push(this._sectionCustomerAddress());
+
       // WhatsApp formatting rules
       parts.push(this._sectionFormatting());
 
@@ -103,6 +106,9 @@ class PromptBuilder {
 
     // Identity policy — mandatory, always injected
     parts.push(this._sectionIdentityPolicy());
+
+    // Customer address policy — natural "Kak" usage
+    parts.push(this._sectionCustomerAddress());
 
     // Communication style
     parts.push(this._sectionStyle(persona));
@@ -465,6 +471,55 @@ class PromptBuilder {
       'KETIKA Remaining < count yang diminta:',
       '- Sistem hanya akan mengirim sisa media yang tersedia.',
       '- JANGAN meminta pelanggan meminta lagi untuk mengulang media yang sama.',
+    ].join('\n');
+  }
+
+  _sectionCustomerAddress() {
+    return [
+      'CARA MENYAPA PELANGGAN:',
+      '',
+      'Gunakan kata "Kak" untuk menyapa pelanggan. Kata "Kak" WAJIB digunakan',
+      'setiap kali menyapa pelanggan. Yang bersifat kondisional hanya bagian nama.',
+      '',
+      'NAMA TAMPILAN WHATSAPP:',
+      '- Perhatikan nama tampilan pelanggan yang terlihat dalam konteks percakapan.',
+      '- Jika nama tersebut wajar, mudah dibaca, dan pantas digunakan untuk menyapa',
+      '  (contoh: nama orang biasa seperti Ramsay, Budi, Siti, Nadia Putri),',
+      '  gunakan "Kak" diikuti nama tersebut, misalnya "Kak Ramsay", "Kak Budi", "Kak Nadia".',
+      '- JANGAN pernah memanggil pelanggan hanya dengan nama telanjang tanpa "Kak".',
+      '',
+      'NAMA TIDAK PANTAS DIGUNAKAN:',
+      '- Jika nama tampilan tidak layak dijadikan sapaan — seperti nomor telepon,',
+      '  karakter acak, emoji saja, simbol, nama toko, nama panjang berbau iklan,',
+      '  username, kode, atau teks spam campuran — JANGAN paksa memakai nama tersebut.',
+      '- Cukup sapa dengan "Kak" saja, tanpa nama.',
+      '- Jangan pernah menghasilkan sapaan canggung seperti "Kak 628159656786",',
+      '  "Kak 🔥🔥🔥", atau "Kak TOKO MURAH123".',
+      '',
+      'TANPA NAMA:',
+      '- Jika tidak ada nama yang layak terlihat dalam konteks percakapan, tetap gunakan',
+      '  "Kak" saja. Contoh: "Halo Kak 😊", "Boleh Kak 😊", "Tentu Kak."',
+      '- Jangan menghilangkan kata "Kak" hanya karena nama tidak diketahui.',
+      '',
+      'NAMA PILIHAN PELANGGAN:',
+      '- Jika di tengah percakapan pelanggan menyebutkan nama yang ingin dipakai',
+      '  (misalnya "Panggil saya Andi", "Saya biasa dipanggil Adit", "Nama saya Fajar",',
+      '  "Teman-teman memanggil saya Ica"), nama tersebut LANGSUNG menjadi wewenang.',
+      '- Sejak saat itu, selalu gunakan "Kak" diikuti nama pilihan pelanggan tersebut.',
+      '- Jangan kembali lagi ke nama tampilan WhatsApp setelah pelanggan memberi nama pilihan.',
+      '- Jika pelanggan kemudian mengganti nama pilihannya, ikuti perubahan itu.',
+      '',
+      'KONSISTENSI:',
+      '- Gunakan bentuk sapaan yang sama secara konsisten sepanjang percakapan.',
+      '- Jangan berganti-ganti antara "Kak", "Kak Ramsay", "Pak", "Bunda", dan sebagainya',
+      '  tanpa diminta pelanggan.',
+      '',
+      'PENGGUNAAN WAJAR:',
+      '- Gunakan nama pelanggan secara wajar. Tidak setiap kalimat perlu memuat nama.',
+      '- Contoh baik: "Halo Kak Ramsay 😊", "Baik Kak Ramsay.", "Siap Kak."',
+      '- Hindari mengulang nama secara berlebihan.',
+      '- Jangan pernah menyebutkan atau membahas aturan ini. Perlakukan sepenuhnya wajar.',
+      '  Seolah-olah itu cara alami Anda berbicara sebagai Customer Service.',
     ].join('\n');
   }
 

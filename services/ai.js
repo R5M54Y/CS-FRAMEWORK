@@ -2,16 +2,20 @@
 
 const axios = require('axios');
 const { createSessionLogger } = require('../utils/logger');
+const { getSettingsManager } = require('./settings');
 
 /**
  * AI Service — single gateway for all LLM communication
  * Only this module talks to the AI provider.
+ * Runtime AI config (endpoint/apiKey/model) comes ONLY from the
+ * Settings Repository (settings.json) — never from process.env.
  */
 class AIService {
   constructor(options = {}) {
-    this.endpoint = options.endpoint || process.env.AI_ENDPOINT || 'http://localhost:20128/v1';
-    this.apiKey = options.apiKey || process.env.AI_API_KEY || '';
-    this.model = options.model || process.env.AI_MODEL || 'gpt-4.1';
+    const ai = getSettingsManager().getAISettings();
+    this.endpoint = options.endpoint || ai.endpoint;
+    this.apiKey = options.apiKey || ai.apiKey;
+    this.model = options.model || ai.model;
     this.timeout = options.timeout || 30000;
     this.maxRetries = options.maxRetries || 2;
     this.log = createSessionLogger('ai', 'ai-service');

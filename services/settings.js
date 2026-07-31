@@ -16,6 +16,15 @@ class SettingsManager {
     try {
       if (fs.existsSync(this.dataPath)) {
         this.settings = fs.readJsonSync(this.dataPath);
+        // Bootstrap: if no AI settings exist, initialize from .env-derived config
+        if (!this.settings.ai || !this.settings.ai.endpoint) {
+          this.settings.ai = {
+            endpoint: this.settings.ai?.endpoint || config.aiEndpoint,
+            apiKey: this.settings.ai?.apiKey || config.aiApiKey,
+            model: this.settings.ai?.model || config.aiModel,
+          };
+          this._saveSettings();
+        }
       } else {
         this.settings = {
           server: {
@@ -94,6 +103,21 @@ class SettingsManager {
   }
 
   set(newSettings) {
+    // Normalize legacy flat AI keys (aiEndpoint/aiApiKey/aiModel) to canonical (endpoint/apiKey/model)
+    if (newSettings.ai) {
+      const ai = newSettings.ai;
+      const normalized = {};
+      if (ai.endpoint !== undefined) normalized.endpoint = ai.endpoint;
+      else if (ai.aiEndpoint !== undefined) normalized.endpoint = ai.aiEndpoint;
+      if (ai.apiKey !== undefined) normalized.apiKey = ai.apiKey;
+      else if (ai.aiApiKey !== undefined) normalized.apiKey = ai.aiApiKey;
+      if (ai.model !== undefined) normalized.model = ai.model;
+      else if (ai.aiModel !== undefined) normalized.model = ai.aiModel;
+      // Masked placeholder means "keep existing key" — never persist the mask
+      if (normalized.apiKey === '••••••••') delete normalized.apiKey;
+      newSettings.ai = normalized;
+    }
+
     if (this.settings.server) {
       this.settings.server = { ...this.settings.server, ...newSettings.server };
     } else {
@@ -176,6 +200,36 @@ class SettingsManager {
       aiModel: config.aiModel,
     };
   }
+
+  /**
+   * SSOT: fresh AI config from settings.json — the ONLY runtime source.
+   * Never reads process.env. Never caches.
+   */
+  getAISettings() {
+    let stored = {};
+    try {
+      if (fs.existsSync(this.dataPath)) {
+        stored = fs.readJsonSync(this.dataPath).ai || {};
+      }
+    } catch (err) {
+      console.error('Failed to read AI settings:', err.message);
+    }
+    return {
+      endpoint: stored.endpoint || stored.aiEndpoint || config.aiEndpoint,
+      apiKey: stored.apiKey || stored.aiApiKey || config.aiApiKey,
+      model: stored.model || stored.aiModel || config.aiModel,
+    };
+  }
+}
+
+// Singleton instance — single source of truth for the whole app
+let _instance = null;
+function getSettingsManager() {
+  if (!_instance) {
+    _instance = new SettingsManager();
+  }
+  return _instance;
 }
 
 module.exports = SettingsManager;
+module.exports.getSettingsManager = getSettingsManager;

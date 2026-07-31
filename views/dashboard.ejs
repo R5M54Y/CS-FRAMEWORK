@@ -273,7 +273,7 @@ async function saveSession() {
         if (data.error) throw new Error(data.error);
         
         closeModal();
-        location.reload();
+        refreshSessionList();
     } catch (err) {
         await _dialogOpen('<p>Failed: ' + err.message + '</p><div class="dialog-actions"><button class="btn btn-primary" onclick="_dialogClose(true)">OK</button></div>');
     }
@@ -289,7 +289,7 @@ async function deleteSession() {
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         closeDeleteModal();
-        location.reload();
+        refreshSessionList();
     } catch (err) {
         alert('Failed: ' + err.message);
     }
@@ -301,7 +301,7 @@ async function duplicateSession(id) {
         const res = await fetch('/api/session/' + id + '/duplicate', { method: 'POST' });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        loadSessions();
+        refreshSessionList();
     } catch (err) {
         alert('Failed to duplicate: ' + err.message);
     }
@@ -366,9 +366,10 @@ async function refreshSessionList() {
                 <td>${s.phoneNumber || '—'}</td>
                 <td><span class="badge badge-${statusClass}">${s.state}</span></td>
                 <td class="actions">
-                    <a href="/session/${s.id}" class="btn btn-sm btn-primary">Dashboard</a>
-                    <button class="btn btn-sm btn-outline" onclick="editSession('${s.id}', '${escName}')">Edit</button>
-                    <button class="btn btn-sm btn-danger" onclick="confirmDelete('${s.id}', '${escName}')">Delete</button>
+                    <a href="/session/${s.id}" class="btn btn-sm btn-primary" title="Open Dashboard">📊</a>
+                    <button class="btn-icon" onclick="editSession('${s.id}')" title="Edit">✏️</button>
+                    <button class="btn-icon" onclick="duplicateSession('${s.id}')" title="Duplicate">📋</button>
+                    <button class="btn-icon btn-icon-danger" onclick="confirmDelete('${s.id}', '${escName}')" title="Delete">🗑️</button>
                 </td>
             </tr>`;
         }).join('');
