@@ -442,7 +442,8 @@ class Session extends EventEmitter {
         content,
         type: options.media ? 'image' : 'text',
         timestamp: new Date().toISOString(),
-        isOutgoing: true
+        isOutgoing: true,
+        fromMe: true
       };
 
       this.messages.push(outgoing);
