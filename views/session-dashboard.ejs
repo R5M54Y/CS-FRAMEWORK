@@ -523,6 +523,10 @@ socket.on('session:sent', (data) => {
 socket.on('bot:state', (data) => {
     if (data.sessionId === sessionId && selectedParticipant) {
         updateBotStatusUI();
+        updateBotBadges(data.botPausedBy);
+    } else if (data.sessionId === sessionId) {
+        // No conversation selected — still update badges
+        updateBotBadges(data.botPausedBy);
     }
 });
 
@@ -555,9 +559,7 @@ function renderConversations(conversations) {
     container.innerHTML = conversations.map(conv => {
         const avatarLetter = conv.name ? conv.name.charAt(0).toUpperCase() : '?';
         const unreadCount = conv.unread > 0 ? `<div class="chat-unread">${conv.unread}</div>` : '';
-        const statusBadge = conv.botPausedBy ? 
-            `<span class="badge ${conv.botPausedBy === 'human' ? 'badge-info' : 'badge-warning'}">${conv.botPausedBy === 'human' ? '👤' : '⏸'} ${conv.botPausedBy === 'human' ? 'HUMAN' : 'PAUSED'}</span>` :
-            `<span class="badge badge-success">🤖 AUTO</span>`;
+        const statusBadge = buildBotBadge(conv.botPausedBy);
         
         return `
             <div class="chat-item ${selectedParticipant === conv.name ? 'selected' : ''}" data-participant="${conv.name}" onclick="selectConversation('${conv.name}')">
@@ -580,6 +582,29 @@ function renderConversations(conversations) {
             </div>
         `;
     }).join('');
+}
+
+// Shared bot badge builder (single authoritative source)
+function buildBotBadge(botPausedBy) {
+    if (botPausedBy) {
+        const type = botPausedBy === 'human' ? 'human' : 'paused';
+        const icon = botPausedBy === 'human' ? '\uD83D\uDC64' : '\u23F8';
+        const label = botPausedBy === 'human' ? 'HUMAN' : 'PAUSED';
+        const badgeClass = botPausedBy === 'human' ? 'badge-info' : 'badge-warning';
+        return '<span class="badge ' + badgeClass + '">' + icon + ' ' + label + '</span>';
+    }
+    return '<span class="badge badge-success">\uD83E\uDD16 AUTO</span>';
+}
+
+// Update badges in all chat items to reflect current bot state (no re-render)
+function updateBotBadges(botPausedBy) {
+    document.querySelectorAll('.chat-item').forEach(item => {
+        const nameEl = item.querySelector('.chat-name');
+        if (!nameEl) return;
+        const oldBadge = nameEl.querySelector('.badge');
+        if (oldBadge) oldBadge.remove();
+        nameEl.insertAdjacentHTML('beforeend', buildBotBadge(botPausedBy));
+    });
 }
 
 async function selectConversation(participant) {
@@ -677,14 +702,16 @@ function appendMessage(msg) {
 }
 
 async function loadConversationStatus() {
-    if (!selectedParticipant) return;
+    if (!selectedParticipant) return null;
     
     try {
         const res = await fetch('/api/session/' + sessionId + '/conversations/status?jid=' + encodeURIComponent(selectedParticipant));
         const status = await res.json();
         updateBotStatusUI(status);
+        return status;
     } catch (e) {
         console.error('Failed to load conversation status:', e);
+        return null;
     }
 }
 
@@ -733,7 +760,12 @@ async function toggleBotStatus() {
         }
         
         await loadConversationStatus();
-        showToast(`Bot ${action}ed successfully`, 'success');
+        // Sync badges with toggle state
+        const status = await loadConversationStatus();
+        if (status) {
+            updateBotBadges(status.botPausedBy);
+        }
+        showToast('Bot ' + action + 'ed successfully', 'success');
     } catch (e) {
         console.error('Failed to toggle bot status:', e);
         showToast('Failed to toggle bot status', 'error');

@@ -647,7 +647,7 @@ class SessionManager extends EventEmitter {
 
       this._saveSessionIndex();
 
-      this.emit('bot:state', { sessionId, botEnabled: false });
+      this.emit('bot:state', { sessionId, botEnabled: false, botPausedBy: session.botPausedBy });
 
       return result;
 
@@ -665,7 +665,7 @@ class SessionManager extends EventEmitter {
 
       this._saveSessionIndex();
 
-      this.emit('bot:state', { sessionId, botEnabled: true });
+      this.emit('bot:state', { sessionId, botEnabled: true, botPausedBy: null });
 
       return result;
 
