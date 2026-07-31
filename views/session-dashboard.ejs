@@ -530,9 +530,7 @@ socket.on('bot:state', (data) => {
 async function loadConversations() {
     try {
         const res = await fetch('/api/session/' + sessionId + '/conversations');
-        let conversations = await res.json();
-        // Sort by timestamp DESC (newest first) — defensive sort
-        conversations.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+        const conversations = await res.json();
         renderConversations(conversations);
     } catch (e) {
         console.error('Failed to load conversations:', e);
