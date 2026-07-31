@@ -20,8 +20,8 @@ class PromptBuilder {
    * @param {string} params.userMessage - The incoming user message
    * @returns {Array} Messages array for chat completion
    */
-  build({ persona, personaPrompt, profile, products, knowledge, knowledgeConfig, history = [], userMessage }) {
-    const systemPrompt = this._buildSystemPrompt({ persona, personaPrompt, profile, products, knowledge, knowledgeConfig });
+  build({ persona, personaPrompt, profile, products, knowledge, knowledgeConfig, history = [], userMessage, gallerySummary }) {
+    const systemPrompt = this._buildSystemPrompt({ persona, personaPrompt, profile, products, knowledge, knowledgeConfig, gallerySummary });
     const messages = [{ role: 'system', content: systemPrompt }];
 
     // Add conversation history (last N exchanges to stay within context)
@@ -42,7 +42,7 @@ class PromptBuilder {
   /**
    * Build the system prompt from all context sources
    */
-  _buildSystemPrompt({ persona, personaPrompt, profile, products, knowledge, knowledgeConfig }) {
+  _buildSystemPrompt({ persona, personaPrompt, profile, products, knowledge, knowledgeConfig, gallerySummary }) {
     // If persona has a custom prompt, use it as the primary system prompt
     const effectivePersonaPrompt = personaPrompt || persona?.prompt;
     if (effectivePersonaPrompt) {
@@ -56,6 +56,11 @@ class PromptBuilder {
 
       // Media tool capability
       parts.push(this._sectionMediaTool());
+
+      // Gallery runtime summary — injected per-request
+      if (gallerySummary) {
+        parts.push(this._sectionGallerySummary(gallerySummary));
+      }
 
       // Marketplace URL policy — strict rules
       if (knowledgeConfig?.marketplaceUrl) {
@@ -107,6 +112,11 @@ class PromptBuilder {
 
     // Media tool capability
     parts.push(this._sectionMediaTool());
+
+    // Gallery runtime summary — injected per-request
+    if (gallerySummary) {
+      parts.push(this._sectionGallerySummary(gallerySummary));
+    }
 
     // Marketplace URL policy — strict rules
     if (knowledgeConfig?.marketplaceUrl) {
@@ -431,6 +441,30 @@ class PromptBuilder {
       'Silakan klik link pembeliannya ya.',
       '</message>',
       '</action>',
+    ].join('\n');
+  }
+
+  _sectionGallerySummary(summary) {
+    const total = summary.total ?? 0;
+    const remaining = summary.remaining ?? 0;
+    const exhausted = summary.exhausted ?? (remaining <= 0);
+
+    return [
+      'GALLERY STATUS:',
+      `Total: ${total}`,
+      `Remaining: ${remaining}`,
+      `Exhausted: ${exhausted ? 'true' : 'false'}`,
+      '',
+      'KETIKA Gallery Exhausted=true:',
+      '- JANGAN emit <action type="send_gallery">.',
+      '- Tidak ada media yang tersisa untuk dikirim.',
+      '- Lanjutkan percakapan secara natural menuju pembelian.',
+      '- Contoh: "Kalau Kakak ingin melihat semua koleksinya, bisa langsung klik link pembelian ya 😊"',
+      '- Boleh emit <action type="send_marketplace_url"> jika pelanggan siap membeli.',
+      '',
+      'KETIKA Remaining < count yang diminta:',
+      '- Sistem hanya akan mengirim sisa media yang tersedia.',
+      '- JANGAN meminta pelanggan meminta lagi untuk mengulang media yang sama.',
     ].join('\n');
   }
 

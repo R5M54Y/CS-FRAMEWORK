@@ -7,6 +7,7 @@ const { createSessionLogger } = require('../utils/logger');
 const HumanizerService = require('../core/humanizer/HumanizerService');
 const messageRepo = require('../core/repositories/MessageRepository');
 const ActionParser = require('./ActionParser');
+const GalleryDeliveryEngine = require('./GalleryDeliveryEngine');
 const path = require('path');
 
 /**
@@ -32,6 +33,11 @@ class ReplyService {
 
     // Humanizer instance — handles typing, presence, delays, splitting
     this.humanizer = new HumanizerService(sessionManager, config.humanizer);
+
+    // Gallery selection engine — decides which files to deliver
+    this.galleryEngine = new GalleryDeliveryEngine({
+      listGalleryFiles: (sid) => sessionManager.listGalleryFiles(sid)
+    });
   }
 
   /**
@@ -57,6 +63,7 @@ class ReplyService {
     const knowledge = this.sessionManager.getKnowledge(sessionId);
     const knowledgeConfig = this.sessionManager.getKnowledgeConfig(sessionId);
     const history = await this._buildHistory(session, from);
+    const gallerySummary = await this._buildGallerySummary(sessionId, from);
 
     const messages = this.promptBuilder.build({
       persona,
@@ -66,7 +73,8 @@ class ReplyService {
       knowledge,
       knowledgeConfig,
       history,
-      userMessage: message.content
+      userMessage: message.content,
+      gallerySummary
     });
 
     try {
@@ -141,41 +149,61 @@ class ReplyService {
     const fs = require('fs');
     const path = require('path');
     const config = require('../config');
-    const files = this.sessionManager.listGalleryFiles(sessionId);
-    if (!files || files.length === 0) return;
 
-    // Random selection: max 4 for album, or all if <= 4
-    const maxCount = 4;
-    const count = Math.min(action.count || 1, files.length, maxCount);
-    const shuffled = [...files].sort(() => Math.random() - 0.5);
-    const selected = shuffled.slice(0, count);
+    // chatId: strip JID suffix for per-customer history scoping
+    const chatId = to.replace(/@[sw]\.whatsapp\.net$|@lid$/i, '');
+
+    // Use GalleryDeliveryEngine — excludes previously delivered files
+    const selection = await this.galleryEngine.select(sessionId, chatId, action.count || 4);
+    const selected = selection.files;
+
+    // No files available (gallery empty OR exhausted) — do nothing.
+    // AI prompt already knows galleryExhausted state; text-only reply follows.
+    if (selected.length === 0) return;
 
     // Send first image via session.sendImage to get message key & persist
     const first = selected[0];
     const firstUrl = `http://localhost:${config.port}/api/session/${sessionId}/gallery/${first.id}/download`;
     const caption = action.caption || '';
+    const deliveredIds = [];
+
     let firstMsg;
     try {
       firstMsg = await session.sendImage(to, firstUrl, caption);
     } catch (err) {
+      this.log.error(`Gallery send failed for ${first.id}: ${err.message}`);
       return;
     }
     if (!firstMsg || !firstMsg.key) return;
+    deliveredIds.push(first.id);
 
-    // Remaining images → send as album via sock.sendMessage with albumParentKey
+    // Remaining images → album via sock.sendMessage with albumParentKey
+    // STOP on first failure — record only successfully delivered files.
     if (selected.length > 1) {
       const remaining = selected.slice(1);
       for (const file of remaining) {
         const fileUrl = `http://localhost:${config.port}/api/session/${sessionId}/gallery/${file.id}/download`;
         try {
-          await session.sock.sendMessage(to, {
+          const sent = await session.sock.sendMessage(to, {
             image: { url: fileUrl },
             albumParentKey: firstMsg.key
           }, {});
+          if (!sent || !sent.key) {
+            this.log.error(`Gallery send no key for ${file.id}, stopping`);
+            break;
+          }
+          deliveredIds.push(file.id);
         } catch (err) {
-          // album image send failed, continue with next
+          this.log.error(`Gallery send failed for ${file.id}: ${err.message} — stopping`);
+          break;
         }
       }
+    }
+
+    // Persist delivery history ONLY for successfully delivered files
+    if (deliveredIds.length > 0) {
+      await messageRepo.recordGalleryDeliveryBatch(sessionId, chatId, deliveredIds);
+      this.log.info(`Gallery delivered ${deliveredIds.length}/${selected.length} to ${chatId}`);
     }
   }
 
@@ -204,6 +232,21 @@ class ReplyService {
   async _fallback(session, to, persona) {
     const fallback = persona?.fallback || 'Maaf, saya tidak memahami. Bisa diulang? 😊';
     await session.sendMessage(to, fallback);
+  }
+
+  async _buildGallerySummary(sessionId, from) {
+    try {
+      const chatId = String(from).replace(/@[sw]\.whatsapp\.net$|@lid$/i, '');
+      const allFiles = this.sessionManager.listGalleryFiles(sessionId) || [];
+      const total = allFiles.length;
+      const delivered = await messageRepo.getDeliveredGallery(sessionId, chatId);
+      const remaining = total - delivered.size;
+      const exhausted = remaining <= 0;
+      return { total, remaining, exhausted };
+    } catch (err) {
+      this.log.error(`_buildGallerySummary error: ${err.message}`);
+      return { total: 0, remaining: 0, exhausted: true };
+    }
   }
 
   async _buildHistory(session, contactJid) {

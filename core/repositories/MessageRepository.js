@@ -312,6 +312,68 @@ class MessageRepository {
     try { return JSON.parse(str); } catch { return {};
     }
   }
+
+  // ===== GALLERY DELIVERY HISTORY =====
+
+  /**
+   * Get set of gallery_file_id already delivered to a customer.
+   * @returns {Promise<Set<string>>}
+   */
+  async getDeliveredGallery(sessionId, chatId) {
+    const rows = await db.all(
+      'SELECT gallery_file_id FROM gallery_delivery_history WHERE session_id = ? AND chat_id = ?',
+      [sessionId, chatId]
+    );
+    return new Set(rows.map(r => r.gallery_file_id));
+  }
+
+  /**
+   * Record a single gallery delivery.
+   * INSERT OR IGNORE — UNIQUE constraint prevents duplicates.
+   */
+  async recordGalleryDelivery(sessionId, chatId, galleryFileId) {
+    await db.run(
+      'INSERT OR IGNORE INTO gallery_delivery_history (session_id, chat_id, gallery_file_id) VALUES (?, ?, ?)',
+      [sessionId, chatId, galleryFileId]
+    );
+  }
+
+  /**
+   * Record multiple gallery deliveries in ONE transaction.
+   * Rollback on failure. INSERT OR IGNORE per row (duplicate-safe).
+   */
+  async recordGalleryDeliveryBatch(sessionId, chatId, galleryFileIds) {
+    if (!galleryFileIds || galleryFileIds.length === 0) return;
+    await new Promise((resolve, reject) => {
+      db._raw.serialize(() => {
+        db._raw.run('BEGIN TRANSACTION', (err) => {
+          if (err) return reject(err);
+          for (const fileId of galleryFileIds) {
+            db._raw.run(
+              'INSERT OR IGNORE INTO gallery_delivery_history (session_id, chat_id, gallery_file_id) VALUES (?, ?, ?)',
+              [sessionId, chatId, fileId]
+            );
+          }
+          db._raw.run('COMMIT', (err2) => {
+            if (err2) {
+              db._raw.run('ROLLBACK');
+              return reject(err2);
+            }
+            resolve();
+          });
+        });
+      });
+    });
+  }
+
+  /**
+   * Returns true when remaining gallery count == 0.
+   * @param {number} totalGalleryCount total files in gallery
+   */
+  async isGalleryExhausted(sessionId, chatId, totalGalleryCount) {
+    const delivered = await this.getDeliveredGallery(sessionId, chatId);
+    return delivered.size >= totalGalleryCount;
+  }
 }
 
 module.exports = new MessageRepository();

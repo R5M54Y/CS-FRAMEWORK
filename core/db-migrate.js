@@ -19,6 +19,8 @@ async function migrateAll() {
   const marker = await db.get("SELECT value FROM settings WHERE key = 'schema_version'");
   if (marker && marker.value === '2') {
     log.info('Migration already complete (schema_version=2), skipping');
+    // Still ensure newer tables exist (e.g. gallery_delivery_history added in v3)
+    await _ensureGalleryHistoryTable();
     return { success: true, skipped: true };
   }
 
@@ -35,6 +37,9 @@ async function migrateAll() {
 
   // Phase 3: Migrate existing JSON message files into messages_v2
   await _migrateMessagesFromJson();
+
+  // Phase 4: Ensure gallery delivery history table exists
+  await _ensureGalleryHistoryTable();
 
   // Write completion marker
   await db.run(
@@ -302,3 +307,25 @@ async function _migrateMessagesFromJson() {
 }
 
 module.exports = { migrateAll };
+
+/**
+ * Phase 4: gallery_delivery_history table
+ * Tracks which gallery files were already delivered to which customer.
+ * UNIQUE(session_id, chat_id, gallery_file_id) — an image can never be
+ * recorded twice for the same customer.
+ */
+async function _ensureGalleryHistoryTable() {
+  log.info('Ensuring gallery_delivery_history table exists...');
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS gallery_delivery_history (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id      TEXT NOT NULL,
+      chat_id         TEXT NOT NULL,
+      gallery_file_id TEXT NOT NULL,
+      sent_at         DATETIME NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(session_id, chat_id, gallery_file_id)
+    )
+  `);
+  await db.run('CREATE INDEX IF NOT EXISTS idx_gdh_session_chat ON gallery_delivery_history(session_id, chat_id)');
+  log.info('gallery_delivery_history table ready');
+}
