@@ -234,9 +234,27 @@ class ReplyService {
   }
 
   async _fallback(session, to, persona) {
-    const fallback = persona?.fallback || 'Maaf, saya tidak memahami. Bisa diulang? 😊';
-    await session.sendMessage(to, fallback);
-  }
+      const fallbackResponses = [
+        'Maaf Kak, saya tak sengaja melewatkan pesan Anda. Bisa ulangi? 😊',
+        'Maaf Kak, pesan tadi sepertinya tidak keangkut. Kirim ulang ya? 🙏',
+        'Maaf Kak, saya agak kewalahan. Ada yang bisa dibantu? 😊',
+        'Maaf Kak, sepertinya saya lewatkan chat ini. Bisa mulai lagi? 🙏',
+        'Maaf Kak, ada sedikit gangguan. Bisa pesan ulang sebentar? 😊',
+        'Maaf Kak, saya kira pesan ini tidak masuk. Kirim ulang ya? 🙏',
+        'Maaf Kak, percakapan tadi terputus. Mulai dari sini saja? 😊',
+        'Maaf Kak, saya terlewatkan notifikasi. Ada apa Kak? 🙏',
+        'Maaf Kak, chat ini tiba-tiba diam. Lanjutkan ya? 😊',
+        'Maaf Kak, saya tidak sempat membaca. Bisa diulang? 🙏',
+        'Maaf Kak, sepertinya ada kendala. Coba kirim lagi? 😊',
+        'Maaf Kak, saya kira sudah selesai. Ada yang lain? 🙏',
+        'Maaf Kak, salah paham sedikit. Bisa jelaskan lagi? 😊',
+        'Maaf Kak, saya lewatkan satu pesan. Kirim ulang ya? 🙏',
+        'Maaf Kak, sistem chat agak lambat. Coba sekali lagi? 😊'
+      ];
+
+      const fallback = persona?.fallback || fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+      await session.sendMessage(to, fallback);
+    }
 
   async _buildGallerySummary(sessionId, from) {
     try {
