@@ -44,38 +44,42 @@ class ReplyService {
    * Process incoming message → build prompt → enqueue → AI → reply via Humanizer
    */
   async processIncomingMessage(sessionId, sender, message) {
-    const session = this.sessionManager.getSession(sessionId);
-    if (!session || !session.connected) return;
+      const session = this.sessionManager.getSession(sessionId);
+      if (!session || !session.connected) return;
 
-    // Check if bot is paused by human takeover
-    if (!session.isBotEnabled()) {
-      this.log.info(`Bot paused by human takeover for session ${sessionId}, skipping AI request`);
-      return;
-    }
+      // Check if bot is paused by human takeover
+      if (!session.isBotEnabled()) {
+        this.log.info(`Bot paused by human takeover for session ${sessionId}, skipping AI request`);
+        return;
+      }
 
-    const from = sender || message.from;
+      const from = sender || message.from;
 
-    const profile = this.sessionManager.getProfile(sessionId);
-    const persona = this.sessionManager.getPersona(sessionId);
-    const personaPromptData = this.sessionManager.getPersonaPrompt(sessionId);
-    const personaPrompt = (personaPromptData && typeof personaPromptData === 'object') ? personaPromptData.prompt || '' : personaPromptData || '';
-    const products = this.sessionManager.getProducts(sessionId);
-    const knowledge = this.sessionManager.getKnowledge(sessionId);
-    const knowledgeConfig = this.sessionManager.getKnowledgeConfig(sessionId);
-    const history = await this._buildHistory(session, from);
-    const gallerySummary = await this._buildGallerySummary(sessionId, from);
+      const profile = this.sessionManager.getProfile(sessionId);
+      const persona = this.sessionManager.getPersona(sessionId);
+      const personaPromptData = this.sessionManager.getPersonaPrompt(sessionId);
+      const personaPrompt = (personaPromptData && typeof personaPromptData === 'object') ? personaPromptData.prompt || '' : personaPromptData || '';
+      const products = this.sessionManager.getProducts(sessionId);
+      const knowledge = this.sessionManager.getKnowledge(sessionId);
+      const knowledgeConfig = this.sessionManager.getKnowledgeConfig(sessionId);
+      const history = await this._buildHistory(session, from);
+      const gallerySummary = await this._buildGallerySummary(sessionId, from);
 
-    const messages = this.promptBuilder.build({
-      persona,
-      personaPrompt,
-      profile,
-      products,
-      knowledge,
-      knowledgeConfig,
-      history,
-      userMessage: message.content,
-      gallerySummary
-    });
+      // Build customer context for first conversation welcome flow
+      const customerContext = this._buildCustomerContext(session, from, history);
+
+      const messages = this.promptBuilder.build({
+        persona,
+        personaPrompt,
+        profile,
+        products,
+        knowledge,
+        knowledgeConfig,
+        history,
+        userMessage: message.content,
+        gallerySummary,
+        customerContext
+      });
 
     try {
       this.log.info(`Enqueuing AI request for session ${sessionId} → ${from}`);
@@ -274,6 +278,73 @@ class ReplyService {
       this.log.error(`_buildHistory DB error: ${err.message}`);
       return [];
     }
+  }
+
+  /**
+   * Build customer context for prompt builder.
+   * Extracts display name from WhatsApp session contacts.
+   * Detects first conversation using message history heuristic (not guaranteed).
+   * @param {Object} session - Session object
+   * @param {string} from - Customer JID
+   * @param {Array} history - Message history for this customer
+   * @returns {Object} customerContext
+   */
+  _buildCustomerContext(session, from, history) {
+    const ctx = { isFirstConversation: false, displayName: null };
+
+    // --- Display name extraction ---
+    // Reuse existing session contacts data (pushName → notify → verifiedName)
+    const contacts = session.contacts || new Map();
+    const contact = contacts.get(from) || {};
+    const rawName = contact.pushName || contact.notify || contact.verifiedName || null;
+
+    if (rawName && this._isValidDisplayName(rawName)) {
+      ctx.displayName = rawName.trim();
+    }
+
+    // --- First conversation detection ---
+    // HEURISTIC: Runtime detection based on available message history.
+    // This is NOT a guaranteed method; it relies on current history snapshot.
+    // Other factors (like persistent state) may exist but are not considered here.
+    // Only indicates lack of recorded prior messages in the current session.
+    ctx.isFirstConversation = history.length === 0;
+
+    return ctx;
+  }
+
+  /**
+   * Validate customer display name.
+   * Reject phone numbers, empty, whitespace-only, symbols-only, numeric-only,
+   * and obviously invalid names.
+   * Does NOT reject legitimate Indonesian names (accented chars, long names, etc.).
+   */
+  _isValidDisplayName(name) {
+    if (!name || typeof name !== 'string') return false;
+    const trimmed = name.trim();
+    if (trimmed.length === 0) return false;
+    if (trimmed.length > 30) return false;
+
+    // Phone number patterns (Indonesian: 0xxx, +62xxx, 62xxx) — 10-15 digits
+    const phonePattern = /^(\+?62|0)[0-9]{9,14}$/;
+    const digitsOnly = trimmed.replace(/\s/g, '');
+    if (phonePattern.test(digitsOnly)) return false;
+
+    // Numeric-only (all digits and optional separators)
+    if (/^[0-9\s]+$/.test(trimmed)) return false;
+
+    // Symbols-only (no letter at all)
+    if (!/[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF]/i.test(trimmed)) return false;
+
+    // URL or handle pattern
+    if (/^(https?:\/\/|www\.|@)/i.test(trimmed)) return false;
+
+    // All-caps multi-word is almost certainly a business name
+    if (/^[A-Z][A-Z\s]{4,}$/.test(trimmed) && /\s/.test(trimmed)) return false;
+
+    // All-caps single-word with no space is likely a brand/business (3+ chars)
+    if (/^[A-Z]{3,}$/.test(trimmed) && !/[a-z]/.test(trimmed)) return false;
+
+    return true;
   }
 }
 
