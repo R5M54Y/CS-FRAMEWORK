@@ -33,6 +33,12 @@ class Session extends EventEmitter {
     this.qrCode = null;
     this.qrAttempts = 0;
     this.reconnectAttempts = 0;
+    
+    // FORENSIC LOG
+    const ts = new Date().toISOString();
+    const shortId = sessionId.slice(0, 8);
+    console.log(`[${ts}] [${shortId}] [constructor()] [state=disconnected] Session initialized`);
+    console.log(`[${ts}] [${shortId}] [constructor()] options=${JSON.stringify({autoReconnect: options.autoReconnect, port: options.port, holder: options.holder})}`);
     this.startTime = null;
     this.phoneNumber = null;
     this.displayName = null;
@@ -42,6 +48,8 @@ class Session extends EventEmitter {
     this.pluggedIn = false;
     this.messages = [];
     this.maxMessages = 200;
+    this.contacts = new Map(); // jid -> { pushName, notify, verifiedName, updatedAt }
+    this._loadContacts();
     this.productManager = new ProductManager();
     this.knowledgeManager = new KnowledgeManager();
     this.replyService = options.replyService || null; // Injected by SessionManager
@@ -61,12 +69,20 @@ class Session extends EventEmitter {
   }
 
   async connect() {
+    const ts = new Date().toISOString();
+    const shortId = this.id.slice(0, 8);
+    
+    console.log(`[${ts}] [${shortId}] [connect()] [state=${this.state}] ENTER: connected=${this.connected} sock=${!!this.sock} qrAttempts=${this.qrAttempts}`);
+    
     if (this.state === 'connecting' || this.state === 'connected') {
+      console.log(`[${ts}] [${shortId}] [connect()] [state=${this.state}] EXIT EARLY: Already in ${this.state}`);
       this.log.warn('Already connecting/connected');
       return { error: 'Already connecting or connected' };
     }
 
+    const prevState = this.state;
     this.state = 'connecting';
+    console.log(`[${ts}] [${shortId}] [connect()] STATE TRANSITION: ${prevState} → connecting`);
     this.emit('status', this.state);
     this.log.info('Connecting...');
 
@@ -78,10 +94,21 @@ class Session extends EventEmitter {
       fs.ensureDirSync(sessionDir);
       fs.ensureDirSync(path.join(sessionDir, 'auth'));
       fs.ensureDirSync(path.join(sessionDir, 'data'));
+      
+      const authDir = path.join(sessionDir, 'auth');
+      const credsPath = path.join(authDir, 'creds.json');
+      const keysDir = path.join(authDir, 'keys');
+      const credsExists = fs.existsSync(credsPath);
+      const keysExists = fs.existsSync(keysDir);
+      
+      console.log(`[${ts}] [${shortId}] [connect()] AUTH STATE: credsExists=${credsExists} keysExists=${keysExists}`);
 
-      const { state: authState, saveCreds } = await useMultiFileAuthState(
-        path.join(sessionDir, 'auth')
-      );
+      const { state: authState, saveCreds } = await useMultiFileAuthState(authDir);
+      
+      console.log(`[${ts}] [${shortId}] [connect()] AUTH LOADED: hasCreds=${!!authState.creds} hasKeys=${!!authState.keys}`);
+      if (authState.creds) {
+        console.log(`[${ts}] [${shortId}] [connect()] CREDS DETAILS: connected=${authState.creds.me?.id || 'N/A'}`);
+      }
 
       this.sock = makeWASocket({
         version,
@@ -102,16 +129,22 @@ class Session extends EventEmitter {
         patchMessageBeforeSending: (msg) => msg,
         getMessage: async () => null
       });
+      
+      console.log(`[${ts}] [${shortId}] [connect()] Socket created: ${!!this.sock}`);
 
       // Store saveCreds for later
       this.saveCreds = saveCreds;
 
       this._attachSocketHandlers();
-
+      
+      console.log(`[${ts}] [${shortId}] [connect()] EXIT: success=true qrCode=${!!this.qrCode}`);
       return { success: true, qrCode: this.qrCode };
 
     } catch (err) {
-      this.state = 'error';
+      const errState = 'error';
+      this.state = errState;
+      console.log(`[${ts}] [${shortId}] [connect()] STATE TRANSITION: ${prevState} → error`);
+      console.log(`[${ts}] [${shortId}] [connect()] ERROR: ${err.message}`);
       this.log.error(`Connection error: ${err.message}`);
       this.emit('status', this.state);
       this.emit('error', err);
@@ -121,25 +154,48 @@ class Session extends EventEmitter {
 
   _attachSocketHandlers() {
     if (!this.sock) return;
+    
+    const ts = new Date().toISOString();
+    const shortId = this.id.slice(0, 8);
+    console.log(`[${ts}] [${shortId}] [_attachSocketHandlers()] Attaching handlers to socket`);
 
     // QR Code
     this.sock.ev.on('creds.update', () => {
-      if (this.saveCreds) this.saveCreds();
+      const ts = new Date().toISOString();
+      console.log(`[${ts}] [${shortId}] [creds.update] Event fired, saveCreds=${!!this.saveCreds}`);
+      if (this.saveCreds) {
+        this.saveCreds();
+        console.log(`[${ts}] [${shortId}] [creds.update] Credentials saved`);
+      }
     });
 
     this.sock.ev.on('connection.update', (update) => {
+      const ts = new Date().toISOString();
       const { connection, lastDisconnect, qr } = update;
+      
+      console.log(`[${ts}] [${shortId}] [connection.update] connection=${connection} qr=${!!qr} lastDisconnect=${!!lastDisconnect}`);
+      if (qr) {
+        console.log(`[${ts}] [${shortId}] [connection.update] QR_GENERATED: length=${qr.length} attempts=${this.qrAttempts + 1}`);
+      }
+      if (lastDisconnect) {
+        const statusCode = lastDisconnect?.error?.output?.statusCode || 500;
+        console.log(`[${ts}] [${shortId}] [connection.update] DISCONNECT: statusCode=${statusCode} reason=${DisconnectReason[statusCode] || 'UNKNOWN'}`);
+      }
 
       if (qr) {
         this.qrCode = qr;
         this.qrAttempts++;
+        console.log(`[${ts}] [${shortId}] [connection.update] QR STORED: qrAttempts=${this.qrAttempts}`);
         this.emit('qr', qr);
         this.log.info(`QR code generated (attempt ${this.qrAttempts})`);
       }
 
       if (connection === 'open') {
+        const prevState = this.state;
         this.state = 'connected';
         this.connected = true;
+        console.log(`[${ts}] [${shortId}] [connection.update] STATE TRANSITION: ${prevState} → connected`);
+        console.log(`[${ts}] [${shortId}] [connection.update] CONNECTION_OPEN: phone=${this.phoneNumber} display=${this.displayName}`);
         this.phoneNumber = this.sock.user?.id || 'Unknown';
         this.displayName = this.sock.user?.name || this.sock.user?.verifiedName || 'Unknown';
         this.startTime = new Date();
@@ -161,30 +217,43 @@ class Session extends EventEmitter {
         const shouldReconnect = statusCode !== DisconnectReason.loggedOut
           && statusCode !== DisconnectReason.badSession
           && statusCode !== 403; // Forbidden by server
+        
+        console.log(`[${ts}] [${shortId}] [connection.update] CONNECTION_CLOSE: statusCode=${statusCode} shouldReconnect=${shouldReconnect} reason=${DisconnectReason[statusCode] || 'UNKNOWN'}`);
 
         if (statusCode === DisconnectReason.loggedOut) {
+          const prevState = this.state;
           this.state = 'disconnected';
+          console.log(`[${ts}] [${shortId}] [connection.update] STATE TRANSITION: ${prevState} → disconnected (loggedOut)`);
           this.log.warn('Logged out from WhatsApp');
           this.emit('status', this.state);
           this.emit('loggedOut');
+          console.log(`[${ts}] [${shortId}] [connection.update] Calling disconnect() due to loggedOut`);
           this.disconnect();
           return;
         }
 
         if (shouldReconnect) {
+          const prevState = this.state;
           this.state = 'reconnecting';
           this.emit('status', this.state);
+          console.log(`[${ts}] [${shortId}] [connection.update] STATE TRANSITION: ${prevState} → reconnecting`);
           this.log.info(`Disconnected (code: ${statusCode}), reconnecting in ${config.reconnectDelay}ms...`);
           this.reconnectAttempts++;
+          console.log(`[${ts}] [${shortId}] [connection.update] reconnectAttempts=${this.reconnectAttempts} maxAttempts=${config.maxReconnectAttempts}`);
           if (this.reconnectAttempts <= config.maxReconnectAttempts) {
             this.reconnectTimer = setTimeout(() => this.connect(), config.reconnectDelay);
+            console.log(`[${ts}] [${shortId}] [connection.update] Scheduled reconnect in ${config.reconnectDelay}ms`);
           } else {
+            const prevState2 = this.state;
             this.state = 'disconnected';
+            console.log(`[${ts}] [${shortId}] [connection.update] STATE TRANSITION: ${prevState2} → disconnected (maxAttemptsReached)`);
             this.emit('status', this.state);
             this.log.error('Max reconnect attempts reached');
           }
         } else {
+          const prevState = this.state;
           this.state = 'disconnected';
+          console.log(`[${ts}] [${shortId}] [connection.update] STATE TRANSITION: ${prevState} → disconnected (permanent)`);
           this.emit('status', this.state);
           this.log.warn(`Connection closed permanently (code: ${statusCode})`);
         }
@@ -208,6 +277,10 @@ class Session extends EventEmitter {
             console.log(`[TRACE] LID→JID: ${jid} → ${m.key.remoteJidAlt}`);
             m.key.remoteJid = m.key.remoteJidAlt;
           }
+          // Remember display name (pushName preferred, fallback: verifiedName / name)
+          if (m.pushName || m.verifiedBizName) {
+            this._updateContact(m.key.remoteJid, { pushName: m.pushName, verifiedName: m.verifiedBizName });
+          }
           await this._handleIncomingMessage(m);
         }
       }
@@ -216,6 +289,14 @@ class Session extends EventEmitter {
     // Presence
     this.sock.ev.on('presence.update', (update) => {
       this.emit('presence', update);
+    });
+
+    // Contacts — refresh cached display names (name changes, profile updates)
+    this.sock.ev.on('contacts.update', (contacts) => {
+      for (const c of contacts || []) {
+        if (!c.id) continue;
+        this._updateContact(c.id, { notify: c.notify, verifiedName: c.verifiedName });
+      }
     });
 
     // Battery
@@ -416,6 +497,68 @@ class Session extends EventEmitter {
     }
   }
 
+  // ===== CONTACT CACHE PERSISTENCE (survives restart) =====
+
+  _contactsFile() {
+    return path.join(config.sessionsPath, this.id, 'contacts.json');
+  }
+
+  _loadContacts() {
+    try {
+      const file = this._contactsFile();
+      if (fs.existsSync(file)) {
+        const data = fs.readJsonSync(file);
+        if (data && typeof data === 'object') {
+          for (const [jid, entry] of Object.entries(data)) {
+            this.contacts.set(jid, {
+              pushName: entry?.pushName || null,
+              notify: entry?.notify || null,
+              verifiedName: entry?.verifiedName || null,
+              updatedAt: entry?.updatedAt || null
+            });
+          }
+        }
+      }
+    } catch (err) {
+      this.log.error(`Failed to load contacts: ${err.message}`);
+    }
+  }
+
+  _persistContacts() {
+    try {
+      const data = {};
+      for (const [jid, entry] of this.contacts) {
+        data[jid] = entry;
+      }
+      fs.ensureDirSync(path.join(config.sessionsPath, this.id));
+      fs.writeJsonSync(this._contactsFile(), data, { spaces: 2 });
+    } catch (err) {
+      this.log.error(`Failed to save contacts: ${err.message}`);
+    }
+  }
+
+  _updateContact(jid, update) {
+    if (!jid) return;
+    const prev = this.contacts.get(jid) || {};
+    const merged = {
+      pushName: update.pushName !== undefined ? update.pushName : (prev.pushName || null),
+      notify: update.notify !== undefined ? update.notify : (prev.notify || null),
+      verifiedName: update.verifiedName !== undefined ? update.verifiedName : (prev.verifiedName || null),
+      updatedAt: new Date().toISOString()
+    };
+    // Only persist when something actually changed
+    if (prev.pushName !== merged.pushName || prev.notify !== merged.notify || prev.verifiedName !== merged.verifiedName) {
+      this.contacts.set(jid, merged);
+      this._persistContacts();
+    }
+  }
+
+  // Best display name for a JID: pushName → notify → verifiedName → phone
+  _contactDisplayName(jid) {
+    const entry = this.contacts.get(jid);
+    return entry?.pushName || entry?.notify || entry?.verifiedName || null;
+  }
+
   async sendMessage(to, content, options = {}) {
     if (!this.connected || !this.sock) {
       this.log.warn('Cannot send: not connected');
@@ -481,76 +624,148 @@ class Session extends EventEmitter {
   }
 
   async disconnect() {
+    const ts = new Date().toISOString();
+    const shortId = this.id.slice(0, 8);
+    const prevState = this.state;
+    
+    console.log(`[${ts}] [${shortId}] [disconnect()] ENTER: state=${this.state} connected=${this.connected} sock=${!!this.sock}`);
+    
     this.connected = false;
     this.state = 'disconnected';
+    console.log(`[${ts}] [${shortId}] [disconnect()] STATE TRANSITION: ${prevState} → disconnected`);
     
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
+      console.log(`[${ts}] [${shortId}] [disconnect()] reconnectTimer cleared`);
     }
 
     if (this.sock) {
       try {
+        console.log(`[${ts}] [${shortId}] [disconnect()] Socket cleanup: removeAllListeners...`);
         this.sock.ev.removeAllListeners();
+        console.log(`[${ts}] [${shortId}] [disconnect()] Socket cleanup: ws.close()...`);
         this.sock.ws?.close();
+        console.log(`[${ts}] [${shortId}] [disconnect()] Socket cleanup: sock.end()...`);
         this.sock.end(new Error('Manual disconnect'));
       } catch (err) {
-        // Ignore
+        console.log(`[${ts}] [${shortId}] [disconnect()] Socket cleanup error: ${err.message}`);
       }
       this.sock = null;
+      console.log(`[${ts}] [${shortId}] [disconnect()] Socket set to null`);
     }
 
     this.emit('status', this.state);
     this.log.info('Disconnected');
+    console.log(`[${ts}] [${shortId}] [disconnect()] EXIT: success=true`);
     return { success: true };
   }
 
   async regenerateQR() {
-      if (this.state === 'connected') {
-        return { error: 'Already connected' };
+      const ts = new Date().toISOString();
+      const shortId = this.id.slice(0, 8);
+      
+      console.log(`[${ts}] [${shortId}] [regenerateQR()] ENTER: state=${this.state} connected=${this.connected} sock=${!!this.sock} qrCode=${!!this.qrCode} qrAttempts=${this.qrAttempts}`);
+      
+      if (
+        this.state === 'connected' ||
+        this.state === 'connecting' ||
+        this.state === 'reconnecting'
+      ) {
+        console.log(`[${ts}] [${shortId}] [regenerateQR()] EXIT EARLY: Operation in progress (state=${this.state})`);
+        return { error: 'QR regeneration already in progress' };
       }
 
       // Jangan kembalikan QR lama yang mungkin sudah expired.
       this.qrCode = null;
+      console.log(`[${ts}] [${shortId}] [regenerateQR()] qrCode reset to null, calling disconnect()...`);
       await this.disconnect();
+      
+      console.log(`[${ts}] [${shortId}] [regenerateQR()] disconnect() completed. state=${this.state} sock=${!!this.sock}`);
+      
+      // Delete auth files to force new QR generation
+      const authDir = path.join(config.sessionsPath, this.id, 'auth');
+      const credsBeforeDelete = fs.existsSync(path.join(authDir, 'creds.json'));
+      console.log(`[${ts}] [${shortId}] [regenerateQR()] PRE-DELETE AUTH: credsExists=${credsBeforeDelete}`);
+      
+      try {
+        if (fs.existsSync(authDir)) {
+          fs.removeSync(authDir);
+          console.log(`[${ts}] [${shortId}] [regenerateQR()] Auth directory deleted`);
+        }
+      } catch (err) {
+        console.log(`[${ts}] [${shortId}] [regenerateQR()] ERROR deleting auth: ${err.message}`);
+        return { error: `Failed to delete auth: ${err.message}` };
+      }
+      
+      const credsAfterDelete = fs.existsSync(path.join(authDir, 'creds.json'));
+      console.log(`[${ts}] [${shortId}] [regenerateQR()] POST-DELETE AUTH: credsExists=${credsAfterDelete}`);
     
       // Connect and wait for QR to be generated
+      console.log(`[${ts}] [${shortId}] [regenerateQR()] Calling connect()...`);
       const result = await this.connect();
-      if (result?.error) return result;
-    
-      // Wait for QR to be generated (max 10 seconds)
-      if (!this.qrCode) {
-        await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            this.removeListener('qr', onQR);
-            reject(new Error('QR generation timeout'));
-          }, 10000);
-        
-          const onQR = (qr) => {
-            clearTimeout(timeout);
-            this.removeListener('qr', onQR);
-            resolve(qr);
-          };
-        
-          this.once('qr', onQR);
-        });
+      console.log(`[${ts}] [${shortId}] [regenerateQR()] connect() returned: ${JSON.stringify(result)}`);
+      if (result?.error) {
+        console.log(`[${ts}] [${shortId}] [regenerateQR()] EXIT: connect() returned error`);
+        return result;
       }
     
+      // Wait for QR to be generated (max 10 seconds)
+      console.log(`[${ts}] [${shortId}] [regenerateQR()] qrCode after connect=${!!this.qrCode}`);
+      if (!this.qrCode) {
+        console.log(`[${ts}] [${shortId}] [regenerateQR()] No QR yet, waiting 10s with listener...`);
+        try {
+          await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              console.log(`[${ts}] [${shortId}] [regenerateQR()] TIMEOUT: 10s elapsed, no QR received. state=${this.state} connected=${this.connected} sock=${!!this.sock}`);
+              this.removeListener('qr', onQR);
+              reject(new Error('QR generation timeout'));
+            }, 10000);
+          
+            const onQR = (qr) => {
+              const ts2 = new Date().toISOString();
+              console.log(`[${ts2}] [${shortId}] [regenerateQR()] QR LISTENER FIRED: qrLength=${qr?.length}`);
+              clearTimeout(timeout);
+              this.removeListener('qr', onQR);
+              resolve(qr);
+            };
+          
+            this.once('qr', onQR);
+            console.log(`[${ts}] [${shortId}] [regenerateQR()] QR listener registered on Session EventEmitter`);
+          });
+        } catch (err) {
+          console.log(`[${ts}] [${shortId}] [regenerateQR()] ERROR: ${err.message}`);
+          return { error: err.message };
+        }
+      }
+    
+      console.log(`[${ts}] [${shortId}] [regenerateQR()] EXIT: qrCode=${!!this.qrCode} qrAttempts=${this.qrAttempts}`);
       return { qrCode: this.qrCode, attempts: this.qrAttempts };
     }
 
     async getQRCode() {
+      const ts = new Date().toISOString();
+      const shortId = this.id.slice(0, 8);
+      
+      console.log(`[${ts}] [${shortId}] [getQRCode()] ENTER: state=${this.state} connected=${this.connected} qrCode=${!!this.qrCode}`);
+      
       if (this.state === 'connected') {
+        console.log(`[${ts}] [${shortId}] [getQRCode()] EXIT EARLY: Already connected`);
         return { error: 'Already connected' };
       }
       if (!this.qrCode) {
         // Trigger QR generation if not available
         if (this.state !== 'connecting') {
+          console.log(`[${ts}] [${shortId}] [getQRCode()] No QR, calling connect()...`);
           await this.connect();
+        } else {
+          console.log(`[${ts}] [${shortId}] [getQRCode()] No QR, but state=connecting, skip connect()`);
         }
         // Wait briefly for QR to generate
         await new Promise(r => setTimeout(r, 1000));
+        console.log(`[${ts}] [${shortId}] [getQRCode()] After 1s wait: qrCode=${!!this.qrCode}`);
       }
+      console.log(`[${ts}] [${shortId}] [getQRCode()] EXIT: qrCode=${!!this.qrCode} qrAttempts=${this.qrAttempts}`);
       return { qrCode: this.qrCode, attempts: this.qrAttempts };
     }
 
