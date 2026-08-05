@@ -64,7 +64,16 @@
     // Update uptime displays periodically
     setInterval(() => {
         document.querySelectorAll('[data-uptime-start]').forEach(el => {
-            const start = new Date(el.dataset.uptimeStart).getTime();
+            const startStr = el.dataset.uptimeStart;
+            if (!startStr || startStr === 'null') {
+                el.textContent = '0s';
+                return;
+            }
+            const start = new Date(startStr).getTime();
+            if (isNaN(start)) {
+                el.textContent = '0s';
+                return;
+            }
             const now = Date.now();
             const seconds = Math.floor((now - start) / 1000);
             el.textContent = formatUptime(seconds);

@@ -39,6 +39,7 @@ function setupSocketIO(httpServer) {
   // Listen to session manager events and broadcast
   sessionManager.on('status', (data) => {
     io.to(`session:${data.sessionId}`).emit('session:status', data);
+    io.emit('sessions', sessionManager.getAllSessions()); // Broadcast updated list
   });
 
   sessionManager.on('qr', (data) => {

@@ -231,35 +231,67 @@ class MainController {
   }
   
   async connectSession(req, res) {
+    const ts = new Date().toISOString();
+    const sessionId = req.params.id;
+    console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.connectSession()] API REQUEST RECEIVED`);
+    
     try {
       const result = await sessionManager.connectSession(req.params.id);
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.connectSession()] Result: ${JSON.stringify(result)}`);
       res.json(result);
     }
-    catch (err) { res.status(500).json({ error: err.message }); }
+    catch (err) {
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.connectSession()] EXCEPTION: ${err.message}`);
+      res.status(500).json({ error: err.message });
+    }
   }
   
   async disconnectSession(req, res) {
+    const ts = new Date().toISOString();
+    const sessionId = req.params.id;
+    console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.disconnectSession()] API REQUEST RECEIVED`);
+    
     try {
       const result = await sessionManager.disconnectSession(req.params.id);
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.disconnectSession()] Result: ${JSON.stringify(result)}`);
       res.json(result);
     }
-    catch (err) { res.status(500).json({ error: err.message }); }
+    catch (err) {
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.disconnectSession()] EXCEPTION: ${err.message}`);
+      res.status(500).json({ error: err.message });
+    }
   }
   
   async reconnectSession(req, res) {
+    const ts = new Date().toISOString();
+    const sessionId = req.params.id;
+    console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.reconnectSession()] API REQUEST RECEIVED`);
+    
     try {
       const result = await sessionManager.reconnectSession(req.params.id);
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.reconnectSession()] Result: ${JSON.stringify(result)}`);
       res.json(result);
     }
-    catch (err) { res.status(500).json({ error: err.message }); }
+    catch (err) {
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.reconnectSession()] EXCEPTION: ${err.message}`);
+      res.status(500).json({ error: err.message });
+    }
   }
   
   async restartSession(req, res) {
+    const ts = new Date().toISOString();
+    const sessionId = req.params.id;
+    console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.restartSession()] API REQUEST RECEIVED`);
+    
     try {
       const result = await sessionManager.restartSession(req.params.id);
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.restartSession()] Result: ${JSON.stringify(result)}`);
       res.json(result);
     }
-    catch (err) { res.status(500).json({ error: err.message }); }
+    catch (err) {
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.restartSession()] EXCEPTION: ${err.message}`);
+      res.status(500).json({ error: err.message });
+    }
   }
 
   async duplicateSession(req, res) {
@@ -271,33 +303,69 @@ class MainController {
   }
 
   async getQRCode(req, res) {
+    const ts = new Date().toISOString();
+    const sessionId = req.params.id;
+    console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.getQRCode()] API REQUEST RECEIVED`);
+    
     try {
-      const { id } = req.params;
-      const session = sessionManager.getSession(id);
-      if (!session) return res.status(404).json({ error: 'Session not found' });
+      const session = sessionManager.getSession(sessionId);
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.getQRCode()] session found=${!!session}`);
+      
+      if (!session) {
+        console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.getQRCode()] ERROR: Session not found`);
+        return res.status(404).json({ error: 'Session not found' });
+      }
+      
       const result = await session.getQRCode();
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.getQRCode()] Result: ${JSON.stringify(result)}`);
+      
       const qrImage = result.qrCode
         ? await QRCode.toDataURL(result.qrCode)
         : null;
+      
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.getQRCode()] SUCCESS: qrImage=${!!qrImage}`);
       res.json({ ...result, qrImage });
     }
-    catch (err) { res.status(500).json({ error: err.message }); }
+    catch (err) {
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.getQRCode()] EXCEPTION: ${err.message}`);
+      res.status(500).json({ error: err.message });
+    }
   }
 
   async regenerateQR(req, res) {
+    const ts = new Date().toISOString();
+    const sessionId = req.params.id;
+    console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.regenerateQR()] API REQUEST RECEIVED`);
+    
     try {
       const session = sessionManager.getSession(req.params.id);
-      if (!session) return res.status(404).json({ error: 'Session not found' });
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.regenerateQR()] session found=${!!session}`);
+      
+      if (!session) {
+        console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.regenerateQR()] ERROR: Session not found`);
+        return res.status(404).json({ error: 'Session not found' });
+      }
 
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.regenerateQR()] Calling session.regenerateQR()...`);
       const result = await session.regenerateQR();
-      if (result?.error) return res.status(409).json(result);
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.regenerateQR()] Result: ${JSON.stringify(result)}`);
+      
+      if (result?.error) {
+        console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.regenerateQR()] Returning 409 error`);
+        return res.status(409).json(result);
+      }
 
       const qrImage = result?.qrCode
         ? await QRCode.toDataURL(result.qrCode)
         : null;
+      
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.regenerateQR()] SUCCESS: qrImage=${!!qrImage}`);
       res.json({ ...result, qrImage });
     }
-    catch (err) { res.status(500).json({ error: err.message }); }
+    catch (err) {
+      console.log(`[${ts}] [${sessionId.slice(0,8)}] [Controller.regenerateQR()] EXCEPTION: ${err.message}`);
+      res.status(500).json({ error: err.message });
+    }
   }
 
   // ===== MESSAGES =====

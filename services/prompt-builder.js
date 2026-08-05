@@ -21,65 +21,76 @@ class PromptBuilder {
    * @returns {Array} Messages array for chat completion
    */
   build({ persona, personaPrompt, profile, products, knowledge, knowledgeConfig, history = [], userMessage, gallerySummary, customerContext }) {
-    const ctx = customerContext || {};
-    const isFirstConversation = ctx.isFirstConversation === true;
-    const customerName = ctx.displayName || null;
-    const systemPrompt = this._buildSystemPrompt({ persona, personaPrompt, profile, products, knowledge, knowledgeConfig, gallerySummary, isFirstConversation, customerName });
-    const messages = [{ role: 'system', content: systemPrompt }];
+      const ctx = customerContext || {};
+      const isFirstConversation = ctx.isFirstConversation === true;
+      const customerName = ctx.displayName || null;
+      // Customer Service identity from active WhatsApp session
+      const csIdentity = ctx.customerService || null;
+      const systemPrompt = this._buildSystemPrompt({ persona, personaPrompt, profile, products, knowledge, knowledgeConfig, gallerySummary, isFirstConversation, customerName, csIdentity });
+      const messages = [{ role: 'system', content: systemPrompt }];
 
-    // Add conversation history (last N exchanges to stay within context)
-    const maxHistory = 20;
-    const recentHistory = history.slice(-maxHistory);
-    for (const msg of recentHistory) {
-      if (msg.role === 'user' || msg.role === 'assistant') {
-        messages.push({ role: msg.role, content: msg.content });
+      // Add conversation history (last N exchanges to stay within context)
+      const maxHistory = 20;
+      const recentHistory = history.slice(-maxHistory);
+      for (const msg of recentHistory) {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          messages.push({ role: msg.role, content: msg.content });
+        }
       }
+
+      // Add current user message
+      messages.push({ role: 'user', content: userMessage });
+
+      return messages;
     }
-
-    // Add current user message
-    messages.push({ role: 'user', content: userMessage });
-
-    return messages;
-  }
 
   /**
    * Build the system prompt from all context sources
    */
-  _buildSystemPrompt({ persona, personaPrompt, profile, products, knowledge, knowledgeConfig, gallerySummary, isFirstConversation, customerName }) {
-    // If persona has a custom prompt, use it as the primary system prompt
-    const effectivePersonaPrompt = personaPrompt || persona?.prompt;
-    if (effectivePersonaPrompt) {
-      const parts = [effectivePersonaPrompt];
+  _buildSystemPrompt({ persona, personaPrompt, profile, products, knowledge, knowledgeConfig, gallerySummary, isFirstConversation, customerName, csIdentity }) {
+      // If persona has a custom prompt, use it as the primary system prompt
+      const effectivePersonaPrompt = personaPrompt || persona?.prompt;
+      if (effectivePersonaPrompt) {
+        const parts = [effectivePersonaPrompt];
 
-      // Identity policy — mandatory, always injected
-      parts.push(this._sectionIdentityPolicy());
+        // Customer Service Identity — from active WhatsApp session (runtime only)
+        parts.push(this._sectionCustomerServiceIdentity(csIdentity));
 
-      // Customer address policy — natural "Kak" usage
-      parts.push(this._sectionCustomerAddress());
+        // Identity policy — mandatory, always injected
+        parts.push(this._sectionIdentityPolicy());
 
-      // WhatsApp formatting rules
-      parts.push(this._sectionFormatting());
+        // Customer address policy — natural "Kak" usage
+        parts.push(this._sectionCustomerAddress());
 
-      // Media tool capability
-      parts.push(this._sectionMediaTool());
+        // WhatsApp formatting rules
+        parts.push(this._sectionFormatting());
 
-      // Gallery runtime summary — injected per-request
-      if (gallerySummary) {
-        parts.push(this._sectionGallerySummary(gallerySummary));
-      }
+        // Media tool capability
+        parts.push(this._sectionMediaTool());
 
-      // Marketplace URL policy — strict rules
-      if (knowledgeConfig?.marketplaceUrl) {
-        parts.push(this._sectionMarketplaceUrl(knowledgeConfig.marketplaceUrl));
-      } else {
-        parts.push(this._sectionMarketplaceUrl(null));
-      }
+        // Gallery runtime summary — injected per-request
+        if (gallerySummary) {
+          parts.push(this._sectionGallerySummary(gallerySummary));
+        }
+
+        // Marketplace URL policy — strict rules
+        if (knowledgeConfig?.marketplaceUrl) {
+          parts.push(this._sectionMarketplaceUrl(knowledgeConfig.marketplaceUrl));
+        } else {
+          parts.push(this._sectionMarketplaceUrl(null));
+        }
 
       // Product Knowledge Policy (PRIORITY: Business Rules)
       parts.push(this._sectionProductKnowledgePolicy());
 
       // Product Knowledge Authority (HIGH PRIORITY: Business Rules)
       parts.push(this._sectionProductKnowledgeAuthority());
+
+      // Knowledge base from config (current business data)
+      const kbSection = this._sectionKnowledgeBase(knowledgeConfig);
+      if (kbSection) {
+        parts.push(kbSection);
+      }
 
       // First Conversation Welcome Behavior
       if (isFirstConversation) {
@@ -218,17 +229,94 @@ class PromptBuilder {
   }
 
   _sectionProducts(products) {
-    const lines = ['Katalog Produk:'];
-    for (const p of products.slice(0, 30)) {
-      let line = `- ${p.name}`;
-      if (p.price) line += ` | Rp ${p.price.toLocaleString('id-ID')}`;
-      if (p.stock !== undefined) line += ` | Stok: ${p.stock}`;
-      if (p.description) line += ` | ${p.description}`;
-      if (p.discount) line += ` | Diskon: ${p.discount}`;
-      lines.push(line);
+      const lines = ['Katalog Produk:'];
+      for (const p of products.slice(0, 30)) {
+        // Start each product with a separator
+        lines.push('------------------------------------------------');
+      
+        // Render each field on its own line with explicit labels
+        if (p.name) lines.push('Nama Produk:');
+        lines.push(p.name);
+      
+        // PRICE RULES:
+        // - p.price = Harga Normal (normal price)
+        // - p.discount = may contain promotional price (e.g., "Promo : Rp37.000" or "Rp37.000")
+        // - If discount exists with a price, extract it as promo price
+        // - Always explicitly tell model which price to quote
+        if (p.price) {
+          let promoPrice = null;
+        
+          // Try to extract promo price from discount field
+          if (p.discount) {
+            const priceMatch = p.discount.match(/Rp?\s*([\d.,]+)/i);
+            if (priceMatch) {
+              const extracted = parseInt(priceMatch[1].replace(/[.,]/g, ''));
+              if (!isNaN(extracted) && extracted > 0) {
+                promoPrice = extracted;
+              }
+            }
+          }
+        
+          if (promoPrice) {
+            // Has promotional price - show both
+            lines.push('HARGA YANG HARUS DISEBUTKAN KE CUSTOMER:');
+            lines.push(`Rp ${promoPrice.toLocaleString('id-ID')}`);
+            lines.push('Harga Normal:');
+            lines.push(`Rp ${p.price.toLocaleString('id-ID')}`);
+          } else {
+            // No promotional price - only show the price to quote
+            lines.push('HARGA YANG HARUS DISEBUTKAN KE CUSTOMER:');
+            lines.push(`Rp ${p.price.toLocaleString('id-ID')}`);
+          }
+        }
+      
+        if (p.stock !== undefined) {
+          lines.push('Stok:');
+          lines.push(p.stock.toString());
+        }
+      
+        if (p.description) {
+          lines.push('Ringkasan:');
+          lines.push(p.description);
+        }
+      
+        if (p.category) {
+          lines.push('Kategori:');
+          lines.push(p.category);
+        }
+      
+        if (p.productType) {
+          lines.push('Tipe Produk:');
+          lines.push(p.productType);
+        }
+      
+        if (p.benefits) {
+          lines.push('Manfaat:');
+          lines.push(p.benefits);
+        }
+      
+        if (p.delivery) {
+          lines.push('Pengiriman:');
+          lines.push(p.delivery);
+        }
+      
+        if (p.access) {
+          lines.push('Akses:');
+          lines.push(p.access);
+        }
+      
+        if (p.bonus) {
+          lines.push('Bonus:');
+          lines.push(p.bonus);
+        }
+      
+        if (p.refundable) {
+          lines.push('Hak Jual Kembali:');
+          lines.push(p.refundable);
+        }
+      }
+      return lines.join('\n');
     }
-    return lines.join('\n');
-  }
 
   _sectionKnowledge(knowledge) {
     const lines = ['Pengetahuan / Informasi:'];
@@ -759,6 +847,13 @@ class PromptBuilder {
       '- Jangan pernah menyebutkan atau membahas aturan ini. Perlakukan sepenuhnya wajar.',
       '  Seolah-olah itu cara alami Anda berbicara sebagai Customer Service.',
     ].join('\n');
+  }
+
+  _sectionCustomerServiceIdentity(csIdentity) {
+    if (!csIdentity) {
+      return '';
+    }
+    return `==================================================\nCUSTOMER SERVICE IDENTITY\n==================================================\n\nNama Customer Service:\n${csIdentity}\n\nATURAN:\n\n- Ini adalah nama Customer Service yang sedang melayani.\n- Gunakan nama ini apabila memperkenalkan diri.\n- Jangan menggunakan nama lain.\n- Jangan mengarang nama.\n- Jangan mengambil nama dari Persona.\n- Jangan mengambil nama dari Product Knowledge.\n- Jika nama tidak tersedia, jangan memperkenalkan diri menggunakan nama.\n==================================================`;
   }
 
   _sectionIdentityPolicy() {

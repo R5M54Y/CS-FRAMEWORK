@@ -8,6 +8,7 @@ const HumanizerService = require('../core/humanizer/HumanizerService');
 const messageRepo = require('../core/repositories/MessageRepository');
 const ActionParser = require('./ActionParser');
 const GalleryDeliveryEngine = require('./GalleryDeliveryEngine');
+const OutputValidator = require('./output-validator');
 const path = require('path');
 
 /**
@@ -38,48 +39,49 @@ class ReplyService {
     this.galleryEngine = new GalleryDeliveryEngine({
       listGalleryFiles: (sid) => sessionManager.listGalleryFiles(sid)
     });
+
+    // Output validator — last line of defense against hallucinations
+    this.validator = new OutputValidator(sessionManager);
   }
 
-  /**
-   * Process incoming message → build prompt → enqueue → AI → reply via Humanizer
-   */
   async processIncomingMessage(sessionId, sender, message) {
-      const session = this.sessionManager.getSession(sessionId);
-      if (!session || !session.connected) return;
+    const session = this.sessionManager.getSession(sessionId);
+    if (!session || !session.connected) return;
 
-      // Check if bot is paused by human takeover
-      if (!session.isBotEnabled()) {
-        this.log.info(`Bot paused by human takeover for session ${sessionId}, skipping AI request`);
-        return;
-      }
+    // Check if bot is paused by human takeover
+    if (!session.isBotEnabled()) {
+      this.log.info(`Bot paused by human takeover for session ${sessionId}, skipping AI request`);
+      return;
+    }
 
-      const from = sender || message.from;
+    const from = sender || message.from;
 
-      const profile = this.sessionManager.getProfile(sessionId);
-      const persona = this.sessionManager.getPersona(sessionId);
-      const personaPromptData = this.sessionManager.getPersonaPrompt(sessionId);
-      const personaPrompt = (personaPromptData && typeof personaPromptData === 'object') ? personaPromptData.prompt || '' : personaPromptData || '';
-      const products = this.sessionManager.getProducts(sessionId);
-      const knowledge = this.sessionManager.getKnowledge(sessionId);
-      const knowledgeConfig = this.sessionManager.getKnowledgeConfig(sessionId);
-      const history = await this._buildHistory(session, from);
-      const gallerySummary = await this._buildGallerySummary(sessionId, from);
+    const profile = this.sessionManager.getProfile(sessionId);
+    const persona = this.sessionManager.getPersona(sessionId);
+    const personaPromptData = this.sessionManager.getPersonaPrompt(sessionId);
+    const personaPrompt = (personaPromptData && typeof personaPromptData === 'object') ? personaPromptData.prompt || '' : personaPromptData || '';
+    const products = await this.sessionManager.getProducts(sessionId);
+    const knowledge = this.sessionManager.getKnowledge(sessionId);
+    const knowledgeConfig = this.sessionManager.getKnowledgeConfig(sessionId);
+    const rawHistory = await this._buildHistory(session, from);
+    const history = this._filterHistory(rawHistory, products);
+    const gallerySummary = await this._buildGallerySummary(sessionId, from);
 
-      // Build customer context for first conversation welcome flow
-      const customerContext = this._buildCustomerContext(session, from, history);
+    // Build customer context for first conversation welcome flow
+    const customerContext = this._buildCustomerContext(session, from, history);
 
-      const messages = this.promptBuilder.build({
-        persona,
-        personaPrompt,
-        profile,
-        products,
-        knowledge,
-        knowledgeConfig,
-        history,
-        userMessage: message.content,
-        gallerySummary,
-        customerContext
-      });
+    const messages = this.promptBuilder.build({
+      persona,
+      personaPrompt,
+      profile,
+      products,
+      knowledge,
+      knowledgeConfig,
+      history,
+      userMessage: message.content,
+      gallerySummary,
+      customerContext
+    });
 
     try {
       this.log.info(`Enqueuing AI request for session ${sessionId} → ${from}`);
@@ -96,21 +98,74 @@ class ReplyService {
         // Parse for action blocks (e.g. <action type="send_gallery">)
         const { actions, text: cleanText } = ActionParser.parse(response);
 
-        // Execute actions before sending text
-        if (actions.length > 0) {
-          await this._executeActions(sessionId, from, actions);
+        // Validate output against authoritative runtime data
+        const promptData = {
+          persona,
+          personaPrompt,
+          profile,
+          products,
+          knowledge,
+          knowledgeConfig,
+          history,
+          userMessage: message.content,
+          gallerySummary,
+          customerContext
+        };
+        const validation = await this.validator.validate(sessionId, cleanText, promptData);
+
+        if (!validation.valid) {
+          this.log.warn(`Validation failed for session ${sessionId}: ${validation.violations.length} violations`);
+          this.validator.logValidation(sessionId, validation.violations, false);
+
+          // Option 1: Regenerate once with internal instruction
+          const regenerated = await this._regenerateWithValidationInstruction(sessionId, from, promptData, validation.violations);
+          if (regenerated) {
+            const { actions: regenActions, text: regenText } = ActionParser.parse(regenerated);
+            const regenValidation = await this.validator.validate(sessionId, regenText, promptData);
+            if (regenValidation.valid) {
+              this.log.info(`Regenerated response passed validation for session ${sessionId}`);
+              this.validator.logValidation(sessionId, regenValidation.violations, true);
+              // Execute regenerated actions
+              if (regenActions.length > 0) {
+                await this._executeActions(sessionId, from, regenActions);
+              }
+              // Send regenerated text
+              if (regenText) {
+                await this.humanizer.send({
+                  sessionId,
+                  to: from,
+                  text: regenText,
+                  options: {}
+                });
+              }
+              return;
+            }
+            this.log.warn(`Regenerated response still failed validation for session ${sessionId}`);
+            this.validator.logValidation(sessionId, regenValidation.violations, true);
+          }
         }
 
-        // Send remaining text through Humanizer (if any)
-        if (cleanText) {
-          await this.humanizer.send({
-            sessionId,
-            to: from,
-            text: cleanText,
-            options: {}
-          });
+        // Valid or regeneration failed — proceed with original (valid) or fallback
+        if (validation.valid) {
+          // Execute actions before sending text
+          if (actions.length > 0) {
+            await this._executeActions(sessionId, from, actions);
+          }
+
+          // Send remaining text through Humanizer (if any)
+          if (cleanText) {
+            await this.humanizer.send({
+              sessionId,
+              to: from,
+              text: cleanText,
+              options: {}
+            });
+          }
+          this.log.info(`AI reply sent via Humanizer to ${from}`);
+        } else {
+          // Fallback after failed regeneration
+          await this._fallback(session, from, persona);
         }
-        this.log.info(`AI reply sent via Humanizer to ${from}`);
       } else {
         this.log.warn(`AI error response: ${response}`);
         await this._fallback(session, from, persona);
@@ -121,9 +176,82 @@ class ReplyService {
     }
   }
 
-  /**
-   * Get queue statistics
-   */
+  async _regenerateWithValidationInstruction(sessionId, to, promptData, violations) {
+    try {
+      const promptForRegeneration = this._buildRegenerationPrompt(promptData, violations);
+      const session = this.sessionManager.getSession(sessionId);
+      if (!session || !session.connected) return null;
+
+      const response = await this.queue.enqueue({
+        id: `ai-regen-${sessionId}-${Date.now()}`,
+        sessionId,
+        messages: [{
+          role: 'user',
+          content: promptForRegeneration
+        }],
+        metadata: { sender: to, sessionId, isRegeneration: true }
+      });
+
+      if (response && !response.startsWith('[')) {
+        const { actions, text: cleanText } = ActionParser.parse(response);
+        return cleanText;
+      }
+      return null;
+    } catch (err) {
+      this.log.error(`Regeneration failed for session ${sessionId}: ${err.message}`);
+      return null;
+    }
+  }
+
+  _buildRegenerationPrompt(promptData, violations) {
+      const violationSummary = violations.map(v => {
+        const allowed = v.allowedValues || v.allowedNumbers || v.allowedEmails || v.allowedUrls || v.allowedSocial || 'none';
+        return `- ${v.type}: "${v.value}" (allowed: ${JSON.stringify(allowed)})`;
+      }).join('\n');
+
+    return `KEMBALI HASIL AI UNTUK VALIDASI
+
+SEBELUMNYA, AI merespon dengan nilai yang tidak ada di data runtime konfigurasi. HATI-HATI: jangan mengembalikan fakta yang sama yang tidak ada di sumber data yang sah.
+
+VIOLATIONS:
+${violationSummary}
+
+Ingat data runtime di bawah ini. Hanya gunakan dari data tersebut. Jika perlu lebih spesifik, jawab saja dengan: "Maaf, saya tidak dapat menjawab pertanyaan ini."
+
+=== DATA START ===
+Personas:
+- Persona: ${JSON.stringify(promptData.persona)}
+- Persona Prompt: ${promptData.personaPrompt}
+
+Profil:
+- Profile: ${JSON.stringify(promptData.profile)}
+
+Produk:
+${promptData.products.map(p => `  - ${JSON.stringify(p)}`).join('\n')}
+
+Pengetahuan:
+${promptData.knowledge.map(k => `  - ${JSON.stringify(k)}`).join('\n')}
+
+Konfigurasi Pengetahuan:
+${JSON.stringify(promptData.knowledgeConfig)}
+
+Riwayat:
+${JSON.stringify(promptData.history)}
+
+Pesan Pengguna:
+${promptData.userMessage}
+
+Ringkasan Galeri:
+${JSON.stringify(promptData.gallerySummary)}
+
+Konteks Pelanggan:
+${JSON.stringify(promptData.customerContext)}
+
+=== DATA END ===
+
+Hasilkan HANYA respons AI normal yang mengikuti prompt. Tidak ada tindakan, tidak ada markup action.
+`;  }
+
   getQueueStats() {
     return this.queue.getStats();
   }
@@ -234,27 +362,25 @@ class ReplyService {
   }
 
   async _fallback(session, to, persona) {
-      const fallbackResponses = [
-        'Maaf Kak, saya tak sengaja melewatkan pesan Anda. Bisa ulangi? 😊',
-        'Maaf Kak, pesan tadi sepertinya tidak keangkut. Kirim ulang ya? 🙏',
-        'Maaf Kak, saya agak kewalahan. Ada yang bisa dibantu? Bisa diulang ya? 😊',
-        'Maaf Kak, sepertinya saya lewatkan chat ini. Bisa mulai lagi? 🙏',
-        'Maaf Kak, ada sedikit gangguan. Bisa pesan ulang sebentar? 😊',
-        'Maaf Kak, saya kira pesan ini tidak masuk. Kirim ulang ya? 🙏',
-        'Maaf Kak, percakapan tadi terputus. Mulai dari sini? Bisa ulang? 😊',
-        'Maaf Kak, saya terlewatkan notifikasi. Ada apa Kak? Bisa pesan lagi? 🙏',
-        'Maaf Kak, chat ini tiba-tiba diam. Lanjutkan lagi? 😊',
-        'Maaf Kak, saya tidak sempat membaca. Bisa diulang? 🙏',
-        'Maaf Kak, sepertinya ada kendala. Coba kirim lagi? 😊',
-        'Maaf Kak, saya kira sudah selesai. Ada yang lain? Bisa pesan lagi? 🙏',
-        'Maaf Kak, salah paham sedikit. Bisa jelaskan lagi? 😊',
-        'Maaf Kak, saya lewatkan satu pesan. Kirim ulang ya? 🙏',
-        'Maaf Kak, sistem chat agak lambat. Coba sekali lagi? 😊'
-      ];
+    const fallbackResponses = [
+      'Maaf Kak, saya tak sengaja melewatkan pesan Anda. Bisa ulangi? 😊',
+      'Maaf Kak, pesan tadi sepertinya tidak keangkut. Kirim ulang ya? 🙏',
+      'Maaf Kak, saya agak kewalahan. Ada yang bisa dibantu? Bisa diulang ya? 😊',
+      'Maaf Kak, pesan tadi tidak terekam. Kirim ulang ya? 🙏',
+      'Maaf Kak, saya kira pesan ini tidak masuk. Kirim ulang ya? 😊',
+      'Maaf Kak, saya terlewatkan notifikasi. Ada apa Kak? Bisa pesan lagi? 🙏',
+      'Maaf Kak, chat ini tiba-tiba diam. Lanjutkan lagi? 😊',
+      'Maaf Kak, saya tidak sempat membaca. Bisa diulang? 🙏',
+      'Maaf Kak, sepertinya ada kendala. Coba kirim lagi? 😊',
+      'Maaf Kak, saya kira sudah selesai. Ada yang lain? Bisa pesan lagi? 🙏',
+      'Maaf Kak, salah paham sedikit. Bisa jelaskan lagi? 😊',
+      'Maaf Kak, saya lewatkan satu pesan. Kirim ulang ya? 🙏',
+      'Maaf Kak, sistem chat agak lambat. Coba sekali lagi? 😊'
+    ];
 
-      const fallback = persona?.fallback || fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
-      await session.sendMessage(to, fallback);
-    }
+    const fallback = persona?.fallback || fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+    await session.sendMessage(to, fallback);
+  }
 
   async _buildGallerySummary(sessionId, from) {
     try {
@@ -299,6 +425,79 @@ class ReplyService {
   }
 
   /**
+   * Filter conversation history to prevent stale business data contamination.
+   * Removes assistant messages containing dynamic catalog data (prices, products, stock).
+   * Preserves user messages and conversational continuity.
+   * 
+   * @param {Array} history - Raw conversation history
+   * @param {Array} products - Current product catalog (source of truth)
+   * @returns {Array} Filtered history safe for LLM context
+   */
+  _filterHistory(history, products) {
+    if (!history || history.length === 0) return history;
+
+    // Build detection patterns from current catalog
+    const productNames = (products || []).map(p => p.name).filter(Boolean);
+    
+    // Patterns that indicate dynamic business data in assistant messages
+    const businessDataPatterns = [
+      /\bRp\s*[\d.,]+/i,              // Prices: Rp 150.000, Rp150000
+      /\b\d{3,}\.?\d{3,}/,             // Large numbers (likely prices/stock)
+      /\bharga/i,                      // "harga" (price)
+      /\bstok/i,                       // "stok" (stock)
+      /\btersedia/i,                   // "tersedia" (available)
+      /\bdiskon/i,                     // "diskon" (discount)
+      /\bpromo/i,                      // "promo" (promotion)
+      /\bkatalog/i,                    // "katalog" (catalog)
+      /\bvarian/i,                     // "varian" (variant)
+      /\bongkir/i,                     // "ongkir" (shipping fee)
+      /\bbonus/i,                      // "bonus"
+    ];
+
+    // Filter assistant messages containing stale business data
+    const filtered = [];
+    for (const msg of history) {
+      // Always keep user messages (preserve customer intent)
+      if (msg.role === 'user') {
+        filtered.push(msg);
+        continue;
+      }
+
+      // For assistant messages: check for business data contamination
+      if (msg.role === 'assistant') {
+        let containsBusinessData = false;
+
+        // Check for price/business patterns
+        for (const pattern of businessDataPatterns) {
+          if (pattern.test(msg.content)) {
+            containsBusinessData = true;
+            break;
+          }
+        }
+
+        // Check for product names from current catalog
+        if (!containsBusinessData && productNames.length > 0) {
+          const lowerContent = msg.content.toLowerCase();
+          for (const productName of productNames) {
+            if (lowerContent.includes(productName.toLowerCase())) {
+              containsBusinessData = true;
+              break;
+            }
+          }
+        }
+
+        // Exclude contaminated assistant messages
+        if (!containsBusinessData) {
+          filtered.push(msg);
+        }
+        // else: silently drop - fresh system prompt contains current catalog
+      }
+    }
+
+    return filtered;
+  }
+
+  /**
    * Build customer context for prompt builder.
    * Extracts display name from WhatsApp session contacts.
    * Detects first conversation using message history heuristic (not guaranteed).
@@ -319,6 +518,10 @@ class ReplyService {
     if (rawName && this._isValidDisplayName(rawName)) {
       ctx.displayName = rawName.trim();
     }
+
+    // --- Customer Service Identity from active WhatsApp session ---
+    // Read from session.displayName (the logged-in WhatsApp account's name)
+    ctx.customerService = session.displayName || null;
 
     // --- First conversation detection ---
     // HEURISTIC: Runtime detection based on available message history.

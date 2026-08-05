@@ -8,12 +8,13 @@ node_modules/
 !.env.ai-queue.example
 
 # Logs
-logs/*.log
 logs/*.log.*
 logs/*.json
 
 # Runtime data
-sessions/
+sessions/**/auth/
+sessions/**/keys/
+sessions/**/creds.json
 data/profiles/*.json
 data/personas/*.json
 data/settings/*.json
@@ -27,19 +28,23 @@ Thumbs.db
 
 # IDE
 .vscode/
+.vscode/.history/
 .idea/
 *.swp
 *.swo
+.history/
 
 # Build artifacts
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
 # Temp files
 temp/*
 !temp/.gitkeep
+tmp/
 
 # Coverage
 coverage/

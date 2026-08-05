@@ -14,7 +14,7 @@ for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":3000"') do (
 
 timeout /t 1 >nul
 
-cd /c C:\CS-FRAMEWORK
+cd /c D:\CS-FRAMEWORK
 
 echo.
 echo Starting application...

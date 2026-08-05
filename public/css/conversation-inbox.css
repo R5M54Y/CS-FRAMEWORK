@@ -136,7 +136,8 @@
 /* Chat Item (reuse dashboard list item styles) */
 .chat-item {
   display: flex;
-  align-items: center;
+  justify-content: space-between;
+  align-items: flex-start;
   padding: 1rem;
   margin-bottom: 0.75rem;
   background: var(--surface);
@@ -205,6 +206,25 @@
   color: var(--text);
   margin-bottom: 0.25rem;
   font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.chat-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-number {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chat-preview {
@@ -219,8 +239,11 @@
 
 .chat-meta {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
 }
 
 .chat-time {
