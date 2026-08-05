@@ -126,7 +126,7 @@ async function start() {
             fs.ensureDirSync(dir);
         }
 
-        server.listen(config.port, config.host, () => {
+        server.listen(config.port, config.host, async () => {
             logger.info(`
 ╔═══════════════════════════════════════════════════════════╗
 ║  WhatsApp CS Framework v1.0.0                             ║
@@ -136,15 +136,12 @@ async function start() {
             `);
             
             // Run database migration (idempotent)
-            migrateAll().then(() => {
-                logger.info('Database migration completed');
-            }).catch(err => {
-                logger.error(`Database migration failed: ${err.message}`);
-            });
+            await migrateAll();
+            logger.info('Database migration completed');
 
             // Auto-connect sessions if configured
             sessionManager.autoConnectAll().catch(err => {
-                logger.warn(`Auto-connect failed: ${err.message}`);
+              logger.warn(`Auto-connect failed: ${err.message}`);
             });
         });
     } catch (err) {
